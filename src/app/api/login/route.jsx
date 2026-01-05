@@ -24,5 +24,5 @@ export async function POST(request) {
         setRefreshToken(refresh)
         return NextResponse.json({"loggedIn": true, "username": username}, {status: 200})
     }
-    return NextResponse.json({"loggedIn": false, ...responseData}, {status: 400})
+    return NextResponse.json({"loggedIn": false, ...responseData}, {status: response.status})
 }   

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -8,14 +9,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/components/authProvider"
 
-const LOGIN_URL = "/api/login/"
+const LOGIN_URL = "/api/login"
 
 
 export default function Page() {
   const auth = useAuth()
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  
   async function handleSubmit (event) {
         event.preventDefault()
-        console.log(event, event.target)
+        setError('')
+        setLoading(true)
+        
         const formData = new FormData(event.target)
         const objectFromForm = Object.fromEntries(formData)
         const jsonData = JSON.stringify(objectFromForm)
@@ -26,21 +32,46 @@ export default function Page() {
             },
             body: jsonData
         }
-        const response = await fetch(LOGIN_URL, requestOptions)
-        let data = {}
+        
         try {
-          data = await response.json()
-        } catch (error) {
+          const response = await fetch(LOGIN_URL, requestOptions)
+          const data = await response.json()
           
-        }
-        // const data = await response.json()
-        if (response.ok) {
-            console.log("logged in")
-            auth.login(data?.username)
-        } else {
-          console.log(await response.json())
+          if (response.ok) {
+              console.log("logged in")
+              // Store tokens
+              localStorage.setItem('access_token', data.access)
+              localStorage.setItem('refresh_token', data.refresh)
+              auth.login(objectFromForm.username)
+          } else {
+            let errorMessage = 'Login failed'
+            
+            // Handle Pydantic validation errors (array of error objects)
+            if (Array.isArray(data) && data.length > 0 && data[0].msg) {
+              errorMessage = data.map(err => {
+                const field = err.loc?.[1] || 'field'
+                return `${field}: ${err.msg}`
+              }).join('; ')
+            }
+            // Handle standard error response with detail
+            else if (data.detail) {
+              errorMessage = data.detail
+            }
+            // Handle message field
+            else if (data.message) {
+              errorMessage = data.message
+            }
+            
+            setError(errorMessage)
+            setLoading(false)
+          }
+        } catch (err) {
+          console.error('Login error:', err)
+          setError('An error occurred. Please try again.')
+          setLoading(false)
         }
     }
+    
   return (
     <div className="w-full lg:grid lg:min-h-[85vh]  lg:grid-cols-2 xl:min-h-[90vh]">
       <div className="flex items-center justify-center py-12">
@@ -51,6 +82,13 @@ export default function Page() {
               Enter your email below to login to your account
             </p>
           </div>
+          
+          {error && (
+            <div className="p-4 bg-red-100 text-red-700 rounded text-sm">
+              {error}
+            </div>
+          )}
+          
           <div className="grid gap-4">
             <form onSubmit={handleSubmit}>
             <div className="grid gap-2">
@@ -75,14 +113,14 @@ export default function Page() {
               </div>
               <Input id="password" name="password" type="password" required />
             </div>
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
             </form>
           </div>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
-            <Link href="#" className="underline">
+            <Link href="/register" className="underline">
               Sign up
             </Link>
           </div>
