@@ -69,8 +69,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Login</h1>
+    <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-6 text-foreground">Login</h1>
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">

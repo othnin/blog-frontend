@@ -1,12 +1,10 @@
-import VerifyEmailForm from '@/components/VerifyEmailForm';
+'use client';
 
-export const metadata = {
-  title: 'Verify Email | Blog',
-};
+import VerifyEmailForm from '@/components/VerifyEmailForm';
 
 export default function VerifyEmailPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <VerifyEmailForm />
     </div>
   );

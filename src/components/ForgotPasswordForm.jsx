@@ -61,8 +61,8 @@ export default function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6">Check Your Email</h1>
+      <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6 text-foreground">Check Your Email</h1>
         <div className="p-4 bg-blue-100 text-blue-700 rounded mb-4">
           If an account exists with that email, we've sent password reset instructions.
         </div>
@@ -80,8 +80,8 @@ export default function ForgotPasswordForm() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Reset Password</h1>
+    <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-6 text-foreground">Reset Password</h1>
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">

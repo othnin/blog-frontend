@@ -127,8 +127,8 @@ export default function VerifyEmailForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Verify Email</h1>
+    <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-6 text-foreground">Verify Email</h1>
 
       {success && (
         <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
