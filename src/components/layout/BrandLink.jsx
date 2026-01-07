@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Package2 } from "lucide-react"
+import { Zap } from "lucide-react"
 
 export default function BrandLink({displayName, className}){
     const finalClass = className ? className : "flex items-center gap-2 text-lg font-semibold md:text-base"
@@ -9,11 +9,11 @@ export default function BrandLink({displayName, className}){
         href="/"
         className={finalClass}
     >
-        <Package2 className="h-6 w-6" />
+        <Zap className="h-6 w-6 text-orange-500" />
         {displayName ? 
-             <span>SaaS</span>
+             <span className="text-foreground">Monsters Eat Austin</span>
             : 
-            <span className="sr-only">SaaS</span>
+            <span className="sr-only">Monsters Eat Austin</span>
         }
     </Link>
 }

@@ -18,16 +18,14 @@ export default function Home() {
  
   
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex flex-col items-center justify-center p-24 gap-8">
       <div>{data && data.apiEndpoint}</div>
       <div>
+        {auth.isAuthenticated ? "Hello user" : "Hello guest"}
       </div>
       <div>
-        {auth.isAuthenticated ? "Hello user" : "Hello guest"}
-      </div>      <div>
         <ThemeToggleButton />
       </div>
-
     </main>
   );
 }

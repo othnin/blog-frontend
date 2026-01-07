@@ -18,8 +18,8 @@ const fontSans = FontSans({
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Django <> NextJS SaaS Platform",
-  description: "Django <> NextJS SaaS Platform",
+  title: "Monsters Eat Austin",
+  description: "A blog from a SW Engineer, Cook & Scientist",
 };
 
 export default function RootLayout({ children }) {
