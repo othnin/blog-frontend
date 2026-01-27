@@ -29,18 +29,18 @@ export default function RootLayout({ children }) {
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
         )}>
-          <Suspense fallback={<div>Loading...</div>}>
           <ThemeProvider 
               attribute="class"
               defaultTheme="dark"
           >
-          <AuthProvider>
-            <BaseLayout className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col bg-muted/40">
-                {children}
-            </BaseLayout>
-          </AuthProvider>
+            <AuthProvider>
+              <BaseLayout className="flex min-h-[calc(100vh_-_theme(spacing.16))] flex-1 flex-col bg-muted/40">
+                <Suspense fallback={<div>Loading...</div>}>
+                  {children}
+                </Suspense>
+              </BaseLayout>
+            </AuthProvider>
           </ThemeProvider>
-        </Suspense>
       </body>
     </html>
   );
