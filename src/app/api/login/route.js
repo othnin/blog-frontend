@@ -1,9 +1,8 @@
-"use server"
-import { DJANGO_API_ENDPOINT } from '@/config/defaults'
 import { setRefreshToken, setToken } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
-const DJANGO_API_LOGIN_URL = `${DJANGO_API_ENDPOINT}/token/pair`
+const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001'
+const DJANGO_API_LOGIN_URL = `${DJANGO_BASE_URL}/api/token/pair`
 
 export async function POST(request) {
     const requestData = await request.json()

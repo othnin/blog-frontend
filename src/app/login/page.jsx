@@ -4,8 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
 
-const LOGIN_URL = '/api/login';
-
 export default function LoginPage() {
   const auth = useAuth();
   const [loading, setLoading] = useState(false);
@@ -29,7 +27,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(LOGIN_URL, {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,9 +38,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('access_token', data.access);
-        localStorage.setItem('refresh_token', data.refresh);
-        auth.login(formData.username);
+        auth.login(data.username);
       } else {
         let errorMessage = 'Login failed';
 

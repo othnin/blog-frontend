@@ -5,6 +5,7 @@ export async function POST(request) {
     const body = await request.json();
 
     const url = `${DJANGO_BASE_URL}/api/auth/password-reset-confirm`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
