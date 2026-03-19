@@ -29,7 +29,7 @@ export default function Navbar({className}) {
                     <CategoryDropdown />
                     
                     <Link
-                        href="/blog"
+                        href="/blog/posts"
                         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                         Blog

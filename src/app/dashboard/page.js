@@ -28,12 +28,7 @@ export default function DashboardPage() {
 
       try {
         setLoading(true);
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(API_ENDPOINTS.blog.myPosts, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(API_ENDPOINTS.blog.myPosts);
 
         if (!response.ok) {
           throw new Error('Failed to fetch your posts');
@@ -42,12 +37,8 @@ export default function DashboardPage() {
         const data = await response.json();
         setMyPosts(data);
 
-        // Also get user role
-        const meResponse = await fetch(API_ENDPOINTS.auth.me, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Also get user role — /api/auth/me route handler adds Bearer from cookie
+        const meResponse = await fetch(API_ENDPOINTS.auth.me);
         if (meResponse.ok) {
           const userData = await meResponse.json();
           setUsername(userData.username);

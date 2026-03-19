@@ -17,7 +17,7 @@ export default function BlogDetailPage() {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_ENDPOINTS.blog.posts}/${slug}/`);
+        const response = await fetch(`/api/blog/posts/${slug}`);
         if (!response.ok) {
           throw new Error('Failed to fetch blog post');
         }

@@ -30,16 +30,12 @@ export default function BlogPostsPage() {
       }
     };
 
-    // Also fetch user role if authenticated
+    // Also fetch user role if authenticated — the /api/auth/me route handler
+    // reads the HTTP-only cookie and adds the Bearer token server-side.
     const fetchUserRole = async () => {
       if (!isAuthenticated) return;
       try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(API_ENDPOINTS.auth.me, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await fetch(API_ENDPOINTS.auth.me);
         if (response.ok) {
           const userData = await response.json();
           setUserRole(userData.profile?.role);

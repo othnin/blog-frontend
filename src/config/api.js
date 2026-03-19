@@ -10,8 +10,8 @@ export const API_ENDPOINTS = {
     refreshToken: '/api/token/refresh',
   },
   blog: {
-    posts: '/api/blog/posts/',
-    categories: '/api/blog/categories/',
-    myPosts: '/api/blog/my-posts/',
+    posts: '/api/blog/posts',
+    categories: '/api/blog/categories',
+    myPosts: '/api/blog/my-posts',
   },
 };
