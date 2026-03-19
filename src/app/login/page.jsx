@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
 
 export default function LoginPage() {
   const auth = useAuth();
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get('registered') === 'true';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -67,6 +70,12 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-6 text-foreground">Login</h1>
+
+      {justRegistered && (
+        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
+          Account created! You can now log in.
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">

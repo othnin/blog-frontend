@@ -41,28 +41,38 @@ export async function refreshAccessToken() {
   }
 }
 
+function dispatchSessionExpired() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth:session-expired'));
+  }
+}
+
 export async function fetchWithAuth(url, options = {}) {
   let token = localStorage.getItem('access_token');
 
-  const headers = {
-    ...options.headers,
-  };
-
+  const headers = { ...options.headers };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
   let response = await fetch(url, { ...options, headers });
 
-  // If 401, try to refresh token and retry once
-  if (response.status === 401 && token) {
-    console.log('Token expired, attempting refresh...');
-    const refreshed = await refreshAccessToken();
+  if (response.status === 401) {
+    if (!token) {
+      // No token at all — not logged in
+      dispatchSessionExpired();
+      return response;
+    }
 
+    // Token present but rejected — attempt refresh
+    const refreshed = await refreshAccessToken();
     if (refreshed) {
       token = localStorage.getItem('access_token');
       headers.Authorization = `Bearer ${token}`;
       response = await fetch(url, { ...options, headers });
+    } else {
+      // Refresh failed — session is truly expired
+      dispatchSessionExpired();
     }
   }
 

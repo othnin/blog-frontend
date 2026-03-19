@@ -22,6 +22,12 @@ export function AuthProvider({ children }) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const handleSessionExpired = () => loginRequiredRedirect();
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, [pathname]);
+
+  useEffect(() => {
     const storedAuthStatus = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (storedAuthStatus) {
       const storedAuthStatusInt = parseInt(storedAuthStatus);

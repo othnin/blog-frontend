@@ -42,22 +42,26 @@ export default function RegisterForm() {
       if (!response.ok) {
         let errorMessage = 'Registration failed';
         
-        // Handle Pydantic validation errors (array of error objects)
-        if (Array.isArray(data) && data.length > 0 && data[0].msg) {
+        // Django Ninja 422: { detail: [{type, loc, msg, ctx}, ...] }
+        if (Array.isArray(data?.detail) && data.detail[0]?.msg) {
+          errorMessage = data.detail.map(err => {
+            const field = err.loc?.[err.loc.length - 1] || 'field';
+            return `${field}: ${err.msg}`;
+          }).join('; ');
+        }
+        // Top-level array of validation errors
+        else if (Array.isArray(data) && data[0]?.msg) {
           errorMessage = data.map(err => {
             const field = err.loc?.[1] || 'field';
             return `${field}: ${err.msg}`;
           }).join('; ');
         }
-        // Handle standard error response with message
+        else if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        }
         else if (data.message) {
           errorMessage = data.message;
         }
-        // Handle detail field
-        else if (data.detail) {
-          errorMessage = data.detail;
-        }
-        // Handle field-specific errors
         else if (data.password?.[0]) {
           errorMessage = `Password: ${data.password[0]}`;
         }
@@ -70,8 +74,13 @@ export default function RegisterForm() {
         return;
       }
 
-      // Redirect to email verification page
-      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      // In debug/dev mode email sending is disabled — go straight to login.
+      // Set NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION=true in .env.local for development.
+      if (process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION === 'true') {
+        router.push('/login?registered=true');
+      } else {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      }
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);
