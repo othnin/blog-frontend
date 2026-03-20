@@ -136,5 +136,6 @@ export default function LexicalRenderer({ jsonContent }) {
     return <div className={styles.loading}>Loading content...</div>;
   }
 
-  return <div className={styles.renderer}>{renderNode(parsedContent, 0)}</div>;
+  const rootNode = parsedContent.root ?? parsedContent;
+  return <div className={styles.renderer}>{renderNode(rootNode, 0)}</div>;
 }

@@ -6,6 +6,7 @@ import BrandLink from "./BrandLink"
 import MobileNavbar from "./MobileNavbar"
 import AccountDropdown from "./AccountDropdown"
 import CategoryDropdown from "./CategoryDropdown"
+import BlogDropdown from "./BlogDropdown"
 import { Search, CircleUser } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,12 +29,7 @@ export default function Navbar({className}) {
                     
                     <CategoryDropdown />
                     
-                    <Link
-                        href="/blog/posts"
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        Blog
-                    </Link>
+                    <BlogDropdown />
                 </div>
                 
                 {/* Middle section: Search */}
