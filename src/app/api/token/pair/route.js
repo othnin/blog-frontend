@@ -7,7 +7,6 @@ export async function POST(request) {
   let body;
   try {
     body = await request.text();
-    console.log('[token/pair] request body:', body);
   } catch (err) {
     console.error('[token/pair] failed to read request body:', err.message);
     return new Response(JSON.stringify({ detail: 'Invalid request body' }), {
@@ -24,8 +23,6 @@ export async function POST(request) {
     });
 
     const responseText = await backendResponse.text();
-    console.log('[token/pair] backend status:', backendResponse.status);
-    console.log('[token/pair] backend response:', responseText);
 
     return new Response(responseText, {
       status: backendResponse.status,

@@ -1,6 +1,7 @@
 const { cookies } = require("next/headers")
 
-const TOKEN_AGE = 3600
+const TOKEN_AGE = 3600          // 1 hour — matches ACCESS_TOKEN_LIFETIME
+const REFRESH_TOKEN_AGE = 604800 // 7 days — matches REFRESH_TOKEN_LIFETIME
 const TOKEN_NAME = "auth-token"
 const TOKEN_REFRESH_NAME = "auth-refresh-token"
 
@@ -37,7 +38,7 @@ export function setRefreshToken(authRefreshToken){
         httpOnly: true, // limit client-side js
         sameSite: 'strict',
         secure: process.env.NODE_ENV !== 'development',
-        maxAge: TOKEN_AGE,
+        maxAge: REFRESH_TOKEN_AGE,
     })
 }
 

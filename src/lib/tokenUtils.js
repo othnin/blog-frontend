@@ -1,77 +1,46 @@
-import { API_ENDPOINTS } from '@/config/api';
-
-export async function refreshAccessToken() {
-  try {
-    const refreshToken = localStorage.getItem('refresh_token');
-    
-    if (!refreshToken) {
-      console.warn('No refresh token available');
-      return false;
-    }
-
-    const response = await fetch(API_ENDPOINTS.auth.refreshToken, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
-
-    if (!response.ok) {
-      console.error('Token refresh failed:', response.status);
-      // Clear invalid tokens
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      return false;
-    }
-
-    const data = await response.json();
-    if (data.access) {
-      localStorage.setItem('access_token', data.access);
-      if (data.refresh) {
-        localStorage.setItem('refresh_token', data.refresh);
-      }
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Error refreshing token:', error);
-    return false;
-  }
-}
-
 function dispatchSessionExpired() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('auth:session-expired'));
   }
 }
 
-export async function fetchWithAuth(url, options = {}) {
-  let token = localStorage.getItem('access_token');
-
-  const headers = { ...options.headers };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+/**
+ * Ask the Next.js /api/token/refresh route handler to exchange the current
+ * HTTP-only refresh-token cookie for a fresh access token (and rotated
+ * refresh token).  The route handler reads/writes the cookies server-side,
+ * so no token values are ever exposed to client-side JavaScript.
+ *
+ * Returns true on success, false on any failure.
+ */
+export async function refreshAccessToken() {
+  try {
+    const response = await fetch('/api/token/refresh', { method: 'POST' });
+    return response.ok;
+  } catch {
+    return false;
   }
+}
 
-  let response = await fetch(url, { ...options, headers });
+/**
+ * Fetch wrapper that transparently handles access-token expiry.
+ *
+ * On a 401 response the function attempts one token refresh via the
+ * /api/token/refresh route handler, then retries the original request.
+ * If the refresh also fails it dispatches an 'auth:session-expired' event
+ * so AuthProvider can redirect the user to login.
+ *
+ * Because tokens are stored in HTTP-only cookies and forwarded by Next.js
+ * route handlers, no Authorization header is managed here — just call the
+ * Next.js /api/* routes as normal.
+ */
+export async function fetchWithAuth(url, options = {}) {
+  let response = await fetch(url, options);
 
   if (response.status === 401) {
-    if (!token) {
-      // No token at all — not logged in
-      dispatchSessionExpired();
-      return response;
-    }
-
-    // Token present but rejected — attempt refresh
     const refreshed = await refreshAccessToken();
     if (refreshed) {
-      token = localStorage.getItem('access_token');
-      headers.Authorization = `Bearer ${token}`;
-      response = await fetch(url, { ...options, headers });
+      response = await fetch(url, options);
     } else {
-      // Refresh failed — session is truly expired
       dispatchSessionExpired();
     }
   }

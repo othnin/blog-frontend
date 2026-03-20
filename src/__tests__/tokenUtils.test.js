@@ -1,30 +1,8 @@
 import '@testing-library/jest-dom';
 import { fetchWithAuth, refreshAccessToken } from '@/lib/tokenUtils';
 
-// Mock the API_ENDPOINTS config
-jest.mock('@/config/api', () => ({
-  API_ENDPOINTS: {
-    auth: {
-      refreshToken: '/api/token/refresh',
-    },
-  },
-}));
-
 // Mock global fetch
 global.fetch = jest.fn();
-
-// Mock localStorage
-const localStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: jest.fn((key) => store[key] ?? null),
-    setItem: jest.fn((key, value) => { store[key] = String(value); }),
-    removeItem: jest.fn((key) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; }),
-    _store: () => store,
-  };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 // Mock window.dispatchEvent
 const dispatchEventSpy = jest.spyOn(window, 'dispatchEvent');
@@ -40,8 +18,7 @@ function mockResponse(status, body = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  fetch.mockReset(); // also clears the mockResolvedValueOnce queue
-  localStorageMock.clear();
+  fetch.mockReset();
   dispatchEventSpy.mockClear();
 });
 
@@ -50,51 +27,26 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('refreshAccessToken', () => {
-  it('returns false immediately when no refresh token is stored', async () => {
-    const result = await refreshAccessToken();
-    expect(result).toBe(false);
-    expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it('stores new access token and returns true on success', async () => {
-    localStorageMock.setItem('refresh_token', 'old-refresh');
-    fetch.mockResolvedValueOnce(mockResponse(200, { access: 'new-access', refresh: 'new-refresh' }));
+  it('calls POST /api/token/refresh and returns true on success', async () => {
+    fetch.mockResolvedValueOnce(mockResponse(200));
 
     const result = await refreshAccessToken();
 
     expect(result).toBe(true);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('access_token', 'new-access');
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('refresh_token', 'new-refresh');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith('/api/token/refresh', { method: 'POST' });
   });
 
-  it('stores only access token when response omits refresh token', async () => {
-    localStorageMock.setItem('refresh_token', 'old-refresh');
-    localStorageMock.setItem.mockClear(); // don't count the setup call
-    fetch.mockResolvedValueOnce(mockResponse(200, { access: 'new-access' }));
-
-    const result = await refreshAccessToken();
-
-    expect(result).toBe(true);
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('access_token', 'new-access');
-    // refresh_token should not be updated by the refresh response
-    const refreshCalls = localStorageMock.setItem.mock.calls.filter(([k]) => k === 'refresh_token');
-    expect(refreshCalls).toHaveLength(0);
-  });
-
-  it('clears tokens and returns false on non-200 response', async () => {
-    localStorageMock.setItem('refresh_token', 'old-refresh');
-    localStorageMock.setItem('access_token', 'old-access');
-    fetch.mockResolvedValueOnce(mockResponse(401, { detail: 'Token expired' }));
+  it('returns false on a non-2xx response', async () => {
+    fetch.mockResolvedValueOnce(mockResponse(401));
 
     const result = await refreshAccessToken();
 
     expect(result).toBe(false);
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('access_token');
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('refresh_token');
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('returns false when fetch throws a network error', async () => {
-    localStorageMock.setItem('refresh_token', 'old-refresh');
     fetch.mockRejectedValueOnce(new Error('Network error'));
 
     const result = await refreshAccessToken();
@@ -108,114 +60,92 @@ describe('refreshAccessToken', () => {
 // ---------------------------------------------------------------------------
 
 describe('fetchWithAuth', () => {
-  it('returns the response as-is for a 200 without touching auth', async () => {
-    localStorageMock.setItem('access_token', 'valid-token');
-    const ok = mockResponse(200, { data: 'hello' });
-    fetch.mockResolvedValueOnce(ok);
+  it('returns the response directly on success without touching auth', async () => {
+    fetch.mockResolvedValueOnce(mockResponse(200, { data: 'hello' }));
 
     const result = await fetchWithAuth('/api/data');
 
     expect(result.status).toBe(200);
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledWith('/api/data', expect.objectContaining({
-      headers: expect.objectContaining({ Authorization: 'Bearer valid-token' }),
-    }));
+    expect(fetch).toHaveBeenCalledWith('/api/data', {});
   });
 
-  it('makes the request without Authorization header when no token is stored', async () => {
-    const ok = mockResponse(200);
-    fetch.mockResolvedValueOnce(ok);
-
-    await fetchWithAuth('/api/public');
-
-    expect(fetch).toHaveBeenCalledWith('/api/public', expect.objectContaining({
-      headers: expect.not.objectContaining({ Authorization: expect.anything() }),
-    }));
-  });
-
-  it('dispatches auth:session-expired and returns 401 immediately when there is no token', async () => {
-    fetch.mockResolvedValueOnce(mockResponse(401));
-
-    const result = await fetchWithAuth('/api/protected');
-
-    expect(result.status).toBe(401);
-    expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
-    const event = dispatchEventSpy.mock.calls[0][0];
-    expect(event.type).toBe('auth:session-expired');
-    // Should not attempt token refresh
-    expect(fetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('retries with new token and returns success after refresh succeeds', async () => {
-    localStorageMock.setItem('access_token', 'expired-token');
-    localStorageMock.setItem('refresh_token', 'valid-refresh'); // needed by refreshAccessToken
-
-    // First call: 401
-    fetch.mockResolvedValueOnce(mockResponse(401));
-    // Refresh call: success — refreshAccessToken will store 'new-token' in localStorage
-    fetch.mockResolvedValueOnce(mockResponse(200, { access: 'new-token' }));
-    // Retry call: success
-    fetch.mockResolvedValueOnce(mockResponse(200, { data: 'secret' }));
+  it('retries original request after successful token refresh', async () => {
+    fetch
+      .mockResolvedValueOnce(mockResponse(401))              // original → 401
+      .mockResolvedValueOnce(mockResponse(200))              // refresh → ok
+      .mockResolvedValueOnce(mockResponse(200, { data: 'secret' })); // retry → ok
 
     const result = await fetchWithAuth('/api/protected');
 
     expect(result.status).toBe(200);
     expect(fetch).toHaveBeenCalledTimes(3);
-    // Third call should use the new token set by refreshAccessToken
-    expect(fetch).toHaveBeenNthCalledWith(3, '/api/protected', expect.objectContaining({
-      headers: expect.objectContaining({ Authorization: 'Bearer new-token' }),
-    }));
+    expect(fetch).toHaveBeenNthCalledWith(2, '/api/token/refresh', { method: 'POST' });
+    expect(fetch).toHaveBeenNthCalledWith(3, '/api/protected', {});
     expect(dispatchEventSpy).not.toHaveBeenCalled();
   });
 
-  it('dispatches auth:session-expired when token is present but refresh fails', async () => {
-    localStorageMock.setItem('access_token', 'expired-token');
-    localStorageMock.setItem('refresh_token', 'expired-refresh');
-
-    // First call: 401
-    fetch.mockResolvedValueOnce(mockResponse(401));
-    // Refresh call: also fails
-    fetch.mockResolvedValueOnce(mockResponse(401, { detail: 'Refresh token expired' }));
+  it('dispatches auth:session-expired and does not retry when refresh fails', async () => {
+    fetch
+      .mockResolvedValueOnce(mockResponse(401)) // original → 401
+      .mockResolvedValueOnce(mockResponse(401)); // refresh → also 401
 
     const result = await fetchWithAuth('/api/protected');
 
     expect(result.status).toBe(401);
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
     const event = dispatchEventSpy.mock.calls[0][0];
     expect(event.type).toBe('auth:session-expired');
-    // Should not retry the original request after failed refresh
-    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('merges caller-provided headers with Authorization', async () => {
-    localStorageMock.setItem('access_token', 'my-token');
-    fetch.mockResolvedValueOnce(mockResponse(200));
+  it('dispatches auth:session-expired when refresh throws a network error', async () => {
+    fetch
+      .mockResolvedValueOnce(mockResponse(401))           // original → 401
+      .mockRejectedValueOnce(new Error('Network error')); // refresh → throws
 
-    await fetchWithAuth('/api/data', {
-      headers: { 'X-Custom': 'value', 'Content-Type': 'application/json' },
-    });
+    await fetchWithAuth('/api/protected');
 
-    expect(fetch).toHaveBeenCalledWith('/api/data', expect.objectContaining({
-      headers: expect.objectContaining({
-        Authorization: 'Bearer my-token',
-        'X-Custom': 'value',
-        'Content-Type': 'application/json',
-      }),
-    }));
+    expect(dispatchEventSpy).toHaveBeenCalledTimes(1);
+    expect(dispatchEventSpy.mock.calls[0][0].type).toBe('auth:session-expired');
   });
 
-  it('passes through method and body options', async () => {
-    localStorageMock.setItem('access_token', 'token');
+  it('passes all options through to fetch', async () => {
     fetch.mockResolvedValueOnce(mockResponse(201));
 
     await fetchWithAuth('/api/posts', {
       method: 'POST',
       body: JSON.stringify({ title: 'Test' }),
+      headers: { 'Content-Type': 'application/json' },
     });
 
-    expect(fetch).toHaveBeenCalledWith('/api/posts', expect.objectContaining({
+    expect(fetch).toHaveBeenCalledWith('/api/posts', {
       method: 'POST',
       body: JSON.stringify({ title: 'Test' }),
-    }));
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  it('does not dispatch session-expired on non-401 error responses', async () => {
+    fetch.mockResolvedValueOnce(mockResponse(500));
+
+    const result = await fetchWithAuth('/api/data');
+
+    expect(result.status).toBe(500);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(dispatchEventSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns the retried response even if it is also a non-200', async () => {
+    fetch
+      .mockResolvedValueOnce(mockResponse(401)) // original
+      .mockResolvedValueOnce(mockResponse(200)) // refresh ok
+      .mockResolvedValueOnce(mockResponse(403)); // retry returns 403
+
+    const result = await fetchWithAuth('/api/forbidden');
+
+    expect(result.status).toBe(403);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(dispatchEventSpy).not.toHaveBeenCalled();
   });
 });

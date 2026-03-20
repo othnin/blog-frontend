@@ -65,8 +65,6 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setIsAuthenticated(false);
     localStorage.setItem(LOCAL_STORAGE_KEY, '0');
-    localStorage.removeItem(LOCAL_ACCESS_TOKEN_KEY);
-    localStorage.removeItem(LOCAL_REFRESH_TOKEN_KEY);
     router.replace(LOGOUT_REDIRECT_URL);
   };
 
