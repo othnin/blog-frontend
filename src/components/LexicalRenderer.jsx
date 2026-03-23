@@ -123,6 +123,17 @@ export default function LexicalRenderer({ jsonContent }) {
           </a>
         );
 
+      case 'image':
+        return (
+          <img
+            key={index}
+            src={node.src}
+            alt={node.altText || ''}
+            className={styles.rendererImage}
+            loading="lazy"
+          />
+        );
+
       default:
         return node.children?.map((child, idx) => renderNode(child, idx));
     }

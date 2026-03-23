@@ -24,10 +24,14 @@ import {
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
+  $insertNodes,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
   UNDO_COMMAND,
   REDO_COMMAND,
+  DecoratorNode,
+  createCommand,
+  COMMAND_PRIORITY_EDITOR,
 } from 'lexical';
 
 import { $setBlocksType } from '@lexical/selection';
@@ -46,8 +50,58 @@ import {
 import { $createCodeNode } from '@lexical/code';
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $getNearestNodeOfType, mergeRegister } from '@lexical/utils';
+import { fetchWithAuth } from '@/lib/tokenUtils';
+import { API_ENDPOINTS } from '@/config/api';
 
 import styles from './LexicalEditor.module.css';
+
+// ─── ImageNode ───────────────────────────────────────────────────────────────
+
+export const INSERT_IMAGE_COMMAND = createCommand('INSERT_IMAGE_COMMAND');
+
+class ImageNode extends DecoratorNode {
+  static getType() { return 'image'; }
+  static clone(node) { return new ImageNode(node.__src, node.__altText, node.__key); }
+
+  constructor(src, altText = '', key) {
+    super(key);
+    this.__src = src;
+    this.__altText = altText;
+  }
+
+  static importJSON(s) { return new ImageNode(s.src, s.altText || ''); }
+  exportJSON() {
+    return { type: 'image', version: 1, src: this.__src, altText: this.__altText };
+  }
+
+  createDOM() { return document.createElement('span'); }
+  updateDOM() { return false; }
+  decorate() {
+    return <img src={this.__src} alt={this.__altText} className={styles.editorImage} />;
+  }
+}
+
+function $createImageNode(src, altText) { return new ImageNode(src, altText); }
+
+// ─── ImagePlugin ─────────────────────────────────────────────────────────────
+
+function ImagePlugin() {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_IMAGE_COMMAND,
+      ({ src, altText }) => {
+        editor.update(() => {
+          const node = $createImageNode(src, altText);
+          $insertNodes([node]);
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+  }, [editor]);
+  return null;
+}
 
 const FONT_FAMILIES = [
   'Default', 'Arial', 'Courier New', 'Georgia',
@@ -78,6 +132,8 @@ function ToolbarPlugin() {
   const [isCode, setIsCode] = useState(false);
   const [isLink, setIsLink] = useState(false);
   const [fontColor, setFontColor] = useState('#000000');
+  const [isUploading, setIsUploading] = useState(false);
+  const imageInputRef = useRef(null);
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -163,6 +219,34 @@ function ToolbarPlugin() {
         }
       });
     });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setIsUploading(true);
+    try {
+      const res = await fetchWithAuth(API_ENDPOINTS.blog.uploadImage, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'Image upload failed.');
+        return;
+      }
+      const { url } = await res.json();
+      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: file.name });
+    } catch (err) {
+      alert('Image upload error: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const btn = (active, title, onClick, children) => (
@@ -264,6 +348,25 @@ function ToolbarPlugin() {
       {/* Link */}
       {btn(isLink, 'Insert / remove link', insertLink, <span>&#128279;</span>)}
 
+      {/* Image upload */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+      />
+      <button
+        type="button"
+        title="Insert image"
+        onMouseDown={noFocusSteal}
+        onClick={() => imageInputRef.current?.click()}
+        disabled={isUploading}
+        className={styles.toolbarBtn}
+      >
+        {isUploading ? '...' : '\uD83D\uDDBC'}
+      </button>
+
       {/* Text color */}
       <label className={styles.colorLabel} title="Text color" onMouseDown={noFocusSteal}>
         <span className={styles.colorIcon} style={{ borderBottom: `3px solid ${fontColor}` }}>A</span>
@@ -309,6 +412,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
       HeadingNode, QuoteNode, CodeNode, CodeHighlightNode,
       LinkNode, AutoLinkNode, ListNode, ListItemNode,
       TableNode, TableCellNode, TableRowNode,
+      ImageNode,
     ],
     onError: (error) => console.error('Lexical error:', error),
   };
@@ -339,6 +443,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
           <CheckListPlugin />
           <TabIndentationPlugin />
           <OnChangePlugin onChange={handleChange} />
+          <ImagePlugin />
         </div>
       </LexicalComposer>
     </div>

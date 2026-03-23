@@ -104,6 +104,14 @@
   color: #1d4ed8;
 }
 
+.rendererImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+}
+
 .error {
   padding: 1rem;
   background: #fee2e2;

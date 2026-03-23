@@ -13,5 +13,6 @@ export const API_ENDPOINTS = {
     posts: '/api/blog/posts',
     categories: '/api/blog/categories',
     myPosts: '/api/blog/my-posts',
+    uploadImage: '/api/blog/upload-image',
   },
 };

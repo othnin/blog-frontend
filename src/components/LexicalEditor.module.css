@@ -205,6 +205,19 @@
 }
 .link:hover { color: #1d4ed8; }
 
+.editorImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 4px 0;
+  cursor: default;
+  display: block;
+}
+
+.editorImage:hover {
+  outline: 2px solid #93c5fd;
+}
+
 /* ─── Code highlight tokens ──────────────────────────────────────── */
 .tokenComment   { color: #6b7280; }
 .tokenPunctuation { color: #9ca3af; }
