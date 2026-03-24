@@ -9,6 +9,7 @@ import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
+import CommentThread from '@/components/CommentThread';
 
 const STATUS_OPTIONS = ['draft', 'published', 'scheduled', 'archived'];
 
@@ -315,6 +316,13 @@ export default function BlogDetailPage() {
             <p>Updated: {new Date(post.updated_at).toLocaleString()}</p>
           </div>
         </article>
+      )}
+
+      {/* ── COMMENTS ── */}
+      {!editMode && post && (
+        <section className="mt-8">
+          <CommentThread postId={post.id} />
+        </section>
       )}
 
       {/* Delete confirmation dialog */}

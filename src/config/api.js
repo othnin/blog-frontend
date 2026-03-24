@@ -14,5 +14,7 @@ export const API_ENDPOINTS = {
     categories: '/api/blog/categories',
     myPosts: '/api/blog/my-posts',
     uploadImage: '/api/blog/upload-image',
+    comments: (postId) => `/api/blog/posts/${postId}/comments/`,
+    comment: (commentId) => `/api/blog/comments/${commentId}/`,
   },
 };
