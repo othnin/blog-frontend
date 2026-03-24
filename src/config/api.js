@@ -8,6 +8,9 @@ export const API_ENDPOINTS = {
     passwordResetRequest: '/api/auth/password-reset-request',
     passwordResetConfirm: '/api/auth/password-reset-confirm',
     refreshToken: '/api/token/refresh',
+    settings: '/api/auth/settings',
+    avatar: '/api/auth/avatar',
+    changePassword: '/api/auth/change-password',
   },
   blog: {
     posts: '/api/blog/posts',

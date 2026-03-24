@@ -287,7 +287,16 @@ export default function BlogDetailPage() {
           <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
 
           <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">
-            <span>By {post.author.username}</span>
+            <span className="flex items-center gap-2">
+              {post.author.avatar ? (
+                <img src={post.author.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+              ) : (
+                <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs">
+                  {post.author.username?.[0]?.toUpperCase()}
+                </span>
+              )}
+              By {post.author.username}
+            </span>
             <span>•</span>
             <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
             <span>•</span>

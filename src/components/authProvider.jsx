@@ -16,6 +16,7 @@ const LOCAL_REFRESH_TOKEN_KEY = 'refresh_token';
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
+  const [avatar, setAvatar] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -39,6 +40,15 @@ export function AuthProvider({ children }) {
     }
     setLoading(false);
   }, []);
+
+  // Fetch avatar when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+    fetch('/api/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setAvatar(data.profile?.avatar || null); })
+      .catch(() => {});
+  }, [isAuthenticated, loading]);
 
   const login = (username) => {
     setIsAuthenticated(true);
@@ -87,6 +97,8 @@ export function AuthProvider({ children }) {
         logout,
         loginRequiredRedirect,
         username,
+        avatar,
+        setAvatar,
         loading,
       }}
     >

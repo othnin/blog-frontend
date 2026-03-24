@@ -6,6 +6,7 @@ import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import LexicalRenderer from '@/components/LexicalRenderer';
 import CommentEditor from '@/components/CommentEditor';
+import { User } from 'lucide-react';
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, {
@@ -45,6 +46,8 @@ function CommentNode({
     isAuthenticated &&
     (comment.author?.username === username || userRole === 'admin');
 
+  const authorAvatarUrl = !comment.is_deleted ? comment.author?.avatar_url : null;
+
   return (
     <div style={{ marginLeft: depth > 0 ? '1.25rem' : 0 }} className="mt-3">
       <div className="flex gap-2 items-start">
@@ -58,6 +61,15 @@ function CommentNode({
             >
               {isCollapsed ? '+' : '−'}
             </button>
+          )}
+        </div>
+
+        {/* Author avatar */}
+        <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-muted flex items-center justify-center mt-0.5">
+          {authorAvatarUrl ? (
+            <img src={authorAvatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <User className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
 
