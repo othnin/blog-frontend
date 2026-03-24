@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, X, Upload, User } from 'lucide-react';
 
@@ -46,7 +47,10 @@ export default function SettingsModal({ open, onClose }) {
       .finally(() => setLoading(false));
   }, [open]);
 
-  if (!open) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!open || !mounted) return null;
 
   const handleFieldChange = (field, value) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
@@ -144,7 +148,7 @@ export default function SettingsModal({ open, onClose }) {
 
   const currentAvatar = avatarPreview || avatar;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-card border border-border rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
@@ -401,7 +405,8 @@ export default function SettingsModal({ open, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

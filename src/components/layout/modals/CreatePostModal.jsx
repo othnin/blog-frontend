@@ -182,7 +182,7 @@ export default function CreatePostModal({ open, onOpenChange }) {
             >
               {submitting ? 'Saving...' : 'Save as Draft'}
             </Button>
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"

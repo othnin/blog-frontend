@@ -53,7 +53,7 @@ export default function BlogDropdown() {
           {canCreatePost && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setModalOpen(true)}>
+              <DropdownMenuItem onClick={() => setTimeout(() => setModalOpen(true), 0)}>
                 <PenSquare className="h-4 w-4 mr-2" />
                 Create Post
               </DropdownMenuItem>

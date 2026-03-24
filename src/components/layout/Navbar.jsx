@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "../authProvider"
 import BrandLink from "./BrandLink"
 import MobileNavbar from "./MobileNavbar"
@@ -14,7 +16,26 @@ import { Input } from "@/components/ui/input"
 
 export default function Navbar({className}) {
     const auth = useAuth()
+    const router = useRouter()
+    const pathname = usePathname()
     const finalClass = className ? className : "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6"
+
+    const [searchValue, setSearchValue] = useState('')
+
+    useEffect(() => {
+        if (pathname !== '/blog/posts') {
+            setSearchValue('')
+        }
+    }, [pathname])
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key !== 'Enter') return
+        const params = new URLSearchParams()
+        if (searchValue.trim()) {
+            params.set('search', searchValue.trim())
+        }
+        router.push(`/blog/posts${params.toString() ? `?${params.toString()}` : ''}`)
+    }
     
     return (
         <header className={finalClass}>
@@ -39,6 +60,9 @@ export default function Navbar({className}) {
                         type="search"
                         placeholder="Search..."
                         className="h-9 bg-muted/50 border-0 focus:bg-background"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
                     />
                 </div>
                 

@@ -5,9 +5,13 @@ const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const limit = searchParams.get('limit');
+  const category = searchParams.get('category');
+  const search = searchParams.get('search');
 
   const url = new URL(`${DJANGO_BASE_URL}/api/blog/posts/`);
   if (limit) url.searchParams.set('limit', limit);
+  if (category) url.searchParams.set('category', category);
+  if (search) url.searchParams.set('search', search);
 
   console.log(`[blog/posts] Fetching → ${url.toString()}`);
 
