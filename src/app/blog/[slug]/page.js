@@ -10,6 +10,7 @@ import CategorySelector from '@/components/CategorySelector';
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import CommentThread from '@/components/CommentThread';
+import UserProfilePopup from '@/components/UserProfilePopup';
 
 const STATUS_OPTIONS = ['draft', 'published', 'scheduled', 'archived'];
 
@@ -35,6 +36,9 @@ export default function BlogDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+
+  // Profile popup
+  const [profilePopup, setProfilePopup] = useState(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -287,7 +291,10 @@ export default function BlogDetailPage() {
           <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
 
           <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">
-            <span className="flex items-center gap-2">
+            <button
+              className="flex items-center gap-2 hover:text-foreground transition-colors"
+              onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
+            >
               {post.author.avatar ? (
                 <img src={post.author.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
               ) : (
@@ -295,8 +302,8 @@ export default function BlogDetailPage() {
                   {post.author.username?.[0]?.toUpperCase()}
                 </span>
               )}
-              By {post.author.username}
-            </span>
+              <span className="hover:underline">By {post.author.username}</span>
+            </button>
             <span>•</span>
             <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
             <span>•</span>
@@ -335,6 +342,14 @@ export default function BlogDetailPage() {
       )}
 
       {/* Delete confirmation dialog */}
+      {profilePopup && (
+        <UserProfilePopup
+          username={profilePopup.username}
+          anchorRect={profilePopup.anchorRect}
+          onClose={() => setProfilePopup(null)}
+        />
+      )}
+
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div

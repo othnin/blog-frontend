@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import LexicalRenderer from '@/components/LexicalRenderer';
 import CommentEditor from '@/components/CommentEditor';
 import { User } from 'lucide-react';
+import UserProfilePopup from '@/components/UserProfilePopup';
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, {
@@ -35,6 +36,7 @@ function CommentNode({
   isAuthenticated,
   username,
   userRole,
+  onUsernameClick,
 }) {
   const hasReplies = comment.replies && comment.replies.length > 0;
   const isCollapsed = collapsed[comment.id] ?? true;
@@ -76,9 +78,16 @@ function CommentNode({
         <div className="flex-1 min-w-0">
           {/* Comment header */}
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-1">
-            <span className="font-medium text-foreground">
-              {comment.is_deleted ? '[deleted]' : comment.author?.username}
-            </span>
+            {comment.is_deleted ? (
+              <span className="font-medium text-foreground">[deleted]</span>
+            ) : (
+              <button
+                className="font-medium text-foreground hover:underline"
+                onClick={(e) => onUsernameClick(comment.author?.username, e.currentTarget.getBoundingClientRect())}
+              >
+                {comment.author?.username}
+              </button>
+            )}
             <span>{formatDate(comment.created_at)}</span>
             {!comment.is_deleted && comment.updated_at !== comment.created_at && (
               <span className="italic">(edited)</span>
@@ -172,6 +181,7 @@ function CommentNode({
               isAuthenticated={isAuthenticated}
               username={username}
               userRole={userRole}
+              onUsernameClick={onUsernameClick}
             />
           ))}
         </div>
@@ -195,6 +205,11 @@ export default function CommentThread({ postId }) {
   const [submitError, setSubmitError] = useState(null);
 
   const [userRole, setUserRole] = useState(null);
+  const [profilePopup, setProfilePopup] = useState(null); // { username, anchorRect }
+
+  const openProfilePopup = useCallback((uname, anchorRect) => {
+    setProfilePopup({ username: uname, anchorRect });
+  }, []);
 
   // Fetch user role for admin delete check
   useEffect(() => {
@@ -397,6 +412,7 @@ export default function CommentThread({ postId }) {
               isAuthenticated={isAuthenticated}
               username={username}
               userRole={userRole}
+              onUsernameClick={openProfilePopup}
             />
           ))}
         </div>
@@ -409,6 +425,14 @@ export default function CommentThread({ postId }) {
         <p className="mt-4 text-sm text-muted-foreground">
           <a href="/login" className="text-primary hover:underline">Log in</a> to join the conversation.
         </p>
+      )}
+
+      {profilePopup && (
+        <UserProfilePopup
+          username={profilePopup.username}
+          anchorRect={profilePopup.anchorRect}
+          onClose={() => setProfilePopup(null)}
+        />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     settings: '/api/auth/settings',
     avatar: '/api/auth/avatar',
     changePassword: '/api/auth/change-password',
+    profile: (username) => `/api/auth/profile/${username}`,
   },
   blog: {
     posts: '/api/blog/posts',

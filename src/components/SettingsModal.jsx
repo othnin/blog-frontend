@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, X, Upload, User } from 'lucide-react';
+
+function ensureAbsolute(url) {
+  if (!url) return url;
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
@@ -59,9 +64,9 @@ export default function SettingsModal({ open, onClose }) {
           display_name: settings.display_name,
           bio: settings.bio,
           email_notifications: settings.email_notifications,
-          twitter_url: settings.twitter_url,
-          github_url: settings.github_url,
-          website_url: settings.website_url,
+          twitter_url: ensureAbsolute(settings.twitter_url),
+          github_url: ensureAbsolute(settings.github_url),
+          website_url: ensureAbsolute(settings.website_url),
           profile_public: settings.profile_public,
         }),
       });
