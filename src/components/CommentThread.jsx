@@ -191,7 +191,7 @@ function CommentNode({
 }
 
 export default function CommentThread({ postId }) {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, username, avatar } = useAuth();
 
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -369,12 +369,21 @@ export default function CommentThread({ postId }) {
 
       {/* Top-level comment editor */}
       {topLevelOpen && (
-        <div className="mb-4">
-          <CommentEditor
-            submitting={submitting}
-            onSubmit={handleCreate}
-            onCancel={() => setTopLevelOpen(false)}
-          />
+        <div className="mb-4 flex gap-2 items-start">
+          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-muted flex items-center justify-center mt-0.5">
+            {avatar ? (
+              <img src={avatar} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex-1">
+            <CommentEditor
+              submitting={submitting}
+              onSubmit={handleCreate}
+              onCancel={() => setTopLevelOpen(false)}
+            />
+          </div>
         </div>
       )}
 

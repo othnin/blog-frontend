@@ -8,7 +8,8 @@ import { forwardRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
+import { Popover, PopoverAnchor } from '@/components/ui/popover';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 
 export function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = React.useState(value);
@@ -444,8 +445,8 @@ const MultipleSelector = React.forwardRef(
               />
             </div>
           </PopoverAnchor>
-          <PopoverContent
-            className="p-0"
+          <PopoverPrimitive.Content
+            className="p-0 z-50 rounded-md"
             style={{ width: dropdownWidth }}
             onOpenAutoFocus={(e) => e.preventDefault()}
             onInteractOutside={(e) => {
@@ -514,7 +515,7 @@ const MultipleSelector = React.forwardRef(
                 </>
               )}
             </CommandList>
-          </PopoverContent>
+          </PopoverPrimitive.Content>
         </Command>
       </Popover>
     );

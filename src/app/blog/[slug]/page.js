@@ -295,10 +295,10 @@ export default function BlogDetailPage() {
               className="flex items-center gap-2 hover:text-foreground transition-colors"
               onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
             >
-              {post.author.avatar ? (
-                <img src={post.author.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+              {post.author.avatar_url ? (
+                <img src={post.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
               ) : (
-                <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs">
+                <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
                   {post.author.username?.[0]?.toUpperCase()}
                 </span>
               )}

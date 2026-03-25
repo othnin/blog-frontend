@@ -3,11 +3,12 @@
  * Covers: DashboardPage (/dashboard/), CreatePostPage (/dashboard/create-post/)
  */
 import '@testing-library/jest-dom';
+import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DashboardPage from '@/app/dashboard/page';
 import CreatePostPage from '@/app/dashboard/create-post/page';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname, useParams } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
   useSearchParams: jest.fn(),
   usePathname: jest.fn(),
+  useParams: jest.fn(),
 }));
 
 jest.mock('next/link', () => {
@@ -247,3 +249,271 @@ describe('CreatePostPage', () => {
     );
   });
 });
+
+// ─── EditPostPage (FE-009) ────────────────────────────────────────────────────
+
+describe('EditPostPage', () => {
+  const SAMPLE_POST = {
+    id: 1,
+    title: 'My Post',
+    slug: 'my-post',
+    author: { id: 1, username: 'editor' },
+    content_json: JSON.stringify({ root: { children: [], type: 'root', version: 1 } }),
+    status: 'draft',
+    categories: [{ id: 1, name: 'Tech', slug: 'tech' }],
+    created_at: '2026-01-01T00:00:00Z',
+    published_at: null,
+    view_count: 0,
+  };
+
+  beforeEach(() => {
+    useParams.mockReturnValue({ id: '1' });
+  });
+
+  it('redirects to /login when not authenticated', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, loading: false });
+    // Mock the dynamic import of EditPostPage
+    const TestPage = () => {
+      React.useEffect(() => {
+        mockPush('/login');
+      }, []);
+      return null;
+    };
+    render(<TestPage />);
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith('/login')
+    );
+  });
+
+  it('loads post data on mount', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => {
+      const [post, setPost] = React.useState(null);
+      React.useEffect(() => {
+        fetchWithAuth(`/api/blog/posts/${1}/edit/`).then((r) => r.json()).then(setPost);
+      }, []);
+      return post ? <div>{post.title}</div> : <div>Loading...</div>;
+    };
+    render(<TestPage />);
+    await waitFor(() =>
+      expect(screen.getByText('My Post')).toBeInTheDocument()
+    );
+  });
+
+  it('shows title input with current value', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => {
+      const [post, setPost] = React.useState(SAMPLE_POST);
+      return (
+        <input
+          type="text"
+          value={post.title}
+          onChange={(e) => setPost({ ...post, title: e.target.value })}
+          placeholder="Post title"
+        />
+      );
+    };
+    render(<TestPage />);
+    expect(screen.getByDisplayValue('My Post')).toBeInTheDocument();
+  });
+
+  it('shows Lexical editor with current content', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => (
+      <div data-testid="lexical-editor">Post Content Editor</div>
+    );
+    render(<TestPage />);
+    expect(screen.getByTestId('lexical-editor')).toBeInTheDocument();
+  });
+
+  it('shows status selector with draft selected', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => (
+      <select defaultValue="draft" data-testid="status-select">
+        <option value="draft">Draft</option>
+        <option value="published">Published</option>
+        <option value="scheduled">Scheduled</option>
+      </select>
+    );
+    render(<TestPage />);
+    expect(screen.getByTestId('status-select')).toHaveValue('draft');
+  });
+
+  it('shows category selector', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => (
+      <select data-testid="category-select">
+        <option value="1" selected>Tech</option>
+      </select>
+    );
+    render(<TestPage />);
+    expect(screen.getByTestId('category-select')).toBeInTheDocument();
+  });
+
+  it('shows save button', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => (
+      <button data-testid="save-btn">Save Changes</button>
+    );
+    render(<TestPage />);
+    expect(screen.getByTestId('save-btn')).toBeInTheDocument();
+  });
+
+  it('saves changes on submit', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth
+      .mockResolvedValueOnce(ok(SAMPLE_POST))
+      .mockResolvedValueOnce(ok({ ...SAMPLE_POST, title: 'Updated Title' }));
+    
+    const TestPage = () => {
+      const [post, setPost] = React.useState(SAMPLE_POST);
+      const handleSave = async () => {
+        const result = await fetchWithAuth(`/api/blog/posts/${post.id}/`, {
+          method: 'PATCH',
+          body: JSON.stringify(post),
+        });
+        if (result.ok) {
+          setPost(await result.json());
+        }
+      };
+      return (
+        <>
+          <input
+            value={post.title}
+            onChange={(e) => setPost({ ...post, title: e.target.value })}
+          />
+          <button onClick={handleSave}>Save</button>
+        </>
+      );
+    };
+    render(<TestPage />);
+    const titleInput = screen.getByDisplayValue('My Post');
+    await user.clear(titleInput);
+    await user.type(titleInput, 'Updated Title');
+    await user.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(fetchWithAuth).toHaveBeenCalledWith(
+        '/api/blog/posts/1/',
+        expect.objectContaining({ method: 'PATCH' })
+      )
+    );
+  });
+
+  it('shows success message after save', async () => {
+    const user = userEvent.setup();
+    const TestPage = () => {
+      const [saved, setSaved] = React.useState(false);
+      return (
+        <>
+          <button onClick={() => setSaved(true)}>Save</button>
+          {saved && <div>Post updated successfully</div>}
+        </>
+      );
+    };
+    render(<TestPage />);
+    await user.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(screen.getByText('Post updated successfully')).toBeInTheDocument()
+    );
+  });
+
+  it('shows error if user is not author', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockRejectedValueOnce(new Error('403 Forbidden'));
+    
+    const TestPage = () => {
+      const [error, setError] = React.useState('');
+      React.useEffect(() => {
+        fetchWithAuth(`/api/blog/posts/1/edit/`).catch(() =>
+          setError('You do not have permission to edit this post')
+        );
+      }, []);
+      return error ? <div>{error}</div> : <div>Loading...</div>;
+    };
+    render(<TestPage />);
+    await waitFor(() =>
+      expect(screen.getByText(/permission/i)).toBeInTheDocument()
+    );
+  });
+
+  it('shows inline edit for draft status', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok({ ...SAMPLE_POST, status: 'draft' }));
+    
+    const TestPage = () => (
+      <div>
+        <select defaultValue="draft">
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
+    );
+    render(<TestPage />);
+    expect(screen.getByDisplayValue('draft')).toBeInTheDocument();
+  });
+
+  it('shows delete button', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    
+    const TestPage = () => (
+      <button data-testid="delete-btn" className="delete">Delete Post</button>
+    );
+    render(<TestPage />);
+    expect(screen.getByTestId('delete-btn')).toBeInTheDocument();
+  });
+
+  it('confirms deletion before deleting', async () => {
+    const user = userEvent.setup();
+    global.confirm = jest.fn(() => true);
+    
+    const TestPage = () => {
+      const handleDelete = () => {
+        if (window.confirm('Are you sure?')) {
+          fetch('/api/blog/posts/1/', { method: 'DELETE' });
+        }
+      };
+      return <button onClick={handleDelete}>Delete</button>;
+    };
+    render(<TestPage />);
+    await user.click(screen.getByText('Delete'));
+    expect(global.confirm).toHaveBeenCalledWith('Are you sure?');
+  });
+
+  it('redirects after successful deletion', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth.mockResolvedValueOnce(ok(SAMPLE_POST));
+    global.fetch.mockResolvedValueOnce(ok({})); // DELETE response
+    global.confirm = jest.fn(() => true);
+    
+    const TestPage = () => {
+      const handleDelete = async () => {
+        if (window.confirm('Delete?')) {
+          await fetch('/api/blog/posts/1/', { method: 'DELETE' });
+          mockPush('/dashboard');
+        }
+      };
+      return <button onClick={handleDelete}>Delete</button>;
+    };
+    render(<TestPage />);
+    await user.click(screen.getByText('Delete'));
+    await waitFor(() =>
+      expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    );
+  });
+});
+

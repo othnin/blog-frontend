@@ -5,21 +5,17 @@ import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
 import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
 import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
+import { LucideFileEdit, LucideSend, User } from 'lucide-react';
+import { useAuth } from '@/components/authProvider';
 
 const EMPTY_CONTENT = JSON.stringify({
   root: {
@@ -30,6 +26,7 @@ const EMPTY_CONTENT = JSON.stringify({
 
 export default function CreatePostModal({ open, onOpenChange }) {
   const router = useRouter();
+  const { avatar, username } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -97,7 +94,21 @@ export default function CreatePostModal({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Post</DialogTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+              {avatar ? (
+                <img src={avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <DialogTitle>Create New Post</DialogTitle>
+              <DialogDescription className="text-xs">
+                Posting as {username}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         {error && (
@@ -172,35 +183,22 @@ export default function CreatePostModal({ open, onOpenChange }) {
             Discard
           </Button>
 
-          {/* Split save button */}
-          <div className="flex">
+          <div className="flex gap-2">
             <Button
               onClick={() => handleSave('draft')}
               disabled={submitting}
               variant="outline"
-              className="rounded-r-none border-r-0"
             >
+              <LucideFileEdit className="h-4 w-4 mr-1" />
               {submitting ? 'Saving...' : 'Save as Draft'}
             </Button>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="rounded-l-none px-2"
-                  disabled={submitting}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleSave('draft')}>
-                  Save as Draft
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSave('published')}>
-                  Publish
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              onClick={() => handleSave('published')}
+              disabled={submitting}
+            >
+              <LucideSend className="h-4 w-4 mr-1" />
+              {submitting ? 'Publishing...' : 'Publish'}
+            </Button>
           </div>
         </div>
       </DialogContent>

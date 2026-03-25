@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import LexicalEditor from '@/components/LexicalEditor';
+import CategorySelector from '@/components/CategorySelector';
 
 export default function EditPostPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -14,7 +15,6 @@ export default function EditPostPage() {
   const params = useParams();
   const postId = params.id;
 
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -111,22 +111,8 @@ export default function EditPostPage() {
       }
     };
 
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.blog.categories);
-        if (!response.ok) {
-          throw new Error('Failed to fetch categories');
-        }
-        const data = await response.json();
-        setCategories(data);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-    };
-
     if (postId && isAuthenticated && userRole) {
       fetchPost();
-      fetchCategories();
     }
   }, [postId, isAuthenticated, userRole]);
 
@@ -135,15 +121,6 @@ export default function EditPostPage() {
     setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
-
-  const handleCategoryToggle = (categoryId) => {
-    setFormData((prev) => ({
-      ...prev,
-      category_ids: prev.category_ids.includes(categoryId)
-        ? prev.category_ids.filter((id) => id !== categoryId)
-        : [...prev.category_ids, categoryId]
     }));
   };
 
@@ -267,26 +244,15 @@ export default function EditPostPage() {
         </div>
 
         {/* Categories */}
-        {categories.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium mb-2 text-foreground">
-              Categories
-            </label>
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.category_ids.includes(category.id)}
-                    onChange={() => handleCategoryToggle(category.id)}
-                    className="rounded"
-                  />
-                  <span className="text-foreground">{category.name}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Categories
+          </label>
+          <CategorySelector
+            selectedIds={formData.category_ids}
+            onChange={(ids) => setFormData((prev) => ({ ...prev, category_ids: ids }))}
+          />
+        </div>
 
         {/* Status */}
         <div>
