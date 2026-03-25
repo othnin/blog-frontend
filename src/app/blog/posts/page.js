@@ -233,16 +233,11 @@ export default function BlogPostsPage() {
                   </p>
                 </>
               )}
-              {post.categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {post.categories.map((cat) => (
-                    <span
-                      key={cat.id}
-                      className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded"
-                    >
-                      {cat.name}
-                    </span>
-                  ))}
+              {post.category && (
+                <div className="mb-2">
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
+                    {post.category.name}
+                  </span>
                 </div>
               )}
               <button

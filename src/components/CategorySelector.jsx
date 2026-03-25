@@ -1,73 +1,82 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import MultipleSelector from '@/components/ui/multiple-selector';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
 
 /**
- * CategorySelector — multi-select with inline category creation.
+ * CategorySelector — single-select dropdown with inline category creation.
  *
  * Props:
- *   selectedIds  number[]                 Currently selected category IDs
- *   onChange     (ids: number[]) => void  Called whenever the selection changes
+ *   selectedId   number | null             Currently selected category ID
+ *   onChange     (id: number | null) => void  Called whenever selection changes
  */
-export default function CategorySelector({ selectedIds = [], onChange }) {
-  const [allOptions, setAllOptions] = useState([]);
+export default function CategorySelector({ selectedId = null, onChange }) {
+  const [categories, setCategories] = useState([]);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetch(API_ENDPOINTS.blog.categories)
       .then((r) => r.json())
-      .then((cats) => setAllOptions(cats.map((c) => ({ value: String(c.id), label: c.name }))))
+      .then(setCategories)
       .catch(() => {});
   }, []);
 
-  const value = allOptions.filter((o) => selectedIds.includes(Number(o.value)));
-
-  const handleChange = async (opts) => {
-    const finalIds = [];
-    const nextOptions = [...allOptions];
-
-    for (const opt of opts) {
-      // A newly-created entry has value === label (set by MultipleSelector creatable logic)
-      if (opt.value === opt.label) {
-        try {
-          const res = await fetchWithAuth(API_ENDPOINTS.blog.categories, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: opt.label }),
-          });
-          if (res.ok) {
-            const newCat = await res.json();
-            const newOpt = { value: String(newCat.id), label: newCat.name };
-            if (!nextOptions.find((o) => o.value === newOpt.value)) {
-              nextOptions.push(newOpt);
-            }
-            finalIds.push(newCat.id);
-          }
-        } catch {
-          // skip failed creation
-        }
-      } else {
-        finalIds.push(Number(opt.value));
+  const handleCreate = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      const res = await fetchWithAuth(API_ENDPOINTS.blog.categories, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const cat = await res.json();
+        setCategories((prev) => [...prev, cat]);
+        onChange(cat.id);
+        setNewName('');
       }
+    } catch {
+      // ignore
+    } finally {
+      setCreating(false);
     }
-
-    setAllOptions(nextOptions);
-    onChange(finalIds);
   };
 
   return (
-    <MultipleSelector
-      value={value}
-      options={allOptions}
-      onChange={handleChange}
-      placeholder="Search or type to create a category…"
-      creatable
-      hideClearAllButton={false}
-      emptyIndicator={
-        <p className="text-center text-sm text-muted-foreground">No categories found.</p>
-      }
-    />
+    <div className="space-y-2">
+      <select
+        value={selectedId ?? ''}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+      >
+        <option value="">— No category —</option>
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>{cat.name}</option>
+        ))}
+      </select>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } }}
+          placeholder="New category name…"
+          className="flex-1 px-3 py-2 bg-background border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+        />
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={!newName.trim() || creating}
+          className="px-3 py-2 bg-secondary text-secondary-foreground rounded-md text-sm hover:bg-secondary/80 disabled:opacity-50"
+        >
+          {creating ? 'Adding…' : 'Add'}
+        </button>
+      </div>
+    </div>
   );
 }

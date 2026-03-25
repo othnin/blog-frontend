@@ -82,7 +82,7 @@ export default function BlogDetailPage() {
     setEditForm({
       title: post.title,
       content_json: post.content_json,
-      category_ids: post.categories.map((c) => c.id),
+      category_id: post.category?.id ?? null,
       status: post.status,
     });
     setSaveError(null);
@@ -285,12 +285,12 @@ export default function BlogDetailPage() {
             </select>
           </div>
 
-          {/* Categories */}
+          {/* Category */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-foreground">Categories</label>
+            <label className="block text-sm font-medium mb-1 text-foreground">Category</label>
             <CategorySelector
-              selectedIds={editForm.category_ids}
-              onChange={(ids) => setEditForm((f) => ({ ...f, category_ids: ids }))}
+              selectedId={editForm.category_id}
+              onChange={(id) => setEditForm((f) => ({ ...f, category_id: id }))}
             />
           </div>
 
@@ -356,16 +356,11 @@ export default function BlogDetailPage() {
             </button>
           </div>
 
-          {post.categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {post.categories.map((cat) => (
-                <span
-                  key={cat.id}
-                  className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded"
-                >
-                  {cat.name}
-                </span>
-              ))}
+          {post.category && (
+            <div className="mb-6">
+              <span className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded">
+                {post.category.name}
+              </span>
             </div>
           )}
 
