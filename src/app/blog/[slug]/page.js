@@ -68,7 +68,6 @@ export default function BlogDetailPage() {
     setEditForm({
       title: post.title,
       content_json: post.content_json,
-      featured_image_url: post.featured_image_url || '',
       category_ids: post.categories.map((c) => c.id),
       status: post.status,
     });
@@ -212,18 +211,6 @@ export default function BlogDetailPage() {
             />
           </div>
 
-          {/* Featured image */}
-          <div>
-            <label className="block text-sm font-medium mb-1 text-foreground">Featured Image URL</label>
-            <input
-              type="url"
-              value={editForm.featured_image_url}
-              onChange={(e) => setEditForm((f) => ({ ...f, featured_image_url: e.target.value }))}
-              placeholder="https://example.com/image.jpg"
-              className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-            />
-          </div>
-
           {/* Status */}
           <div>
             <label className="block text-sm font-medium mb-1 text-foreground">Status</label>
@@ -280,14 +267,6 @@ export default function BlogDetailPage() {
       {/* ── VIEW MODE ── */}
       {!editMode && (
         <article className="bg-card rounded-lg p-6 md:p-8">
-          {post.featured_image_url && (
-            <img
-              src={post.featured_image_url}
-              alt={post.title}
-              className="w-full h-96 object-cover rounded-lg mb-6"
-            />
-          )}
-
           <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
 
           <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">

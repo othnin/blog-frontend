@@ -30,7 +30,6 @@ export default function CreatePostPage() {
         type: 'root'
       }
     }),
-    featured_image_url: '',
     category_ids: [],
     status: 'draft'
   });
@@ -217,21 +216,6 @@ export default function CreatePostPage() {
             placeholder="Enter blog post title"
             className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
             required
-          />
-        </div>
-
-        {/* Featured Image URL */}
-        <div>
-          <label className="block text-sm font-medium mb-2 text-foreground">
-            Featured Image URL
-          </label>
-          <input
-            type="url"
-            name="featured_image_url"
-            value={formData.featured_image_url}
-            onChange={handleInputChange}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
           />
         </div>
 

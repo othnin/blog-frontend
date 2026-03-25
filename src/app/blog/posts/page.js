@@ -151,13 +151,6 @@ export default function BlogPostsPage() {
               href={`/blog/${post.slug}`}
               className="block p-6 border rounded-lg bg-card hover:shadow-lg transition-shadow"
             >
-              {post.featured_image_url && (
-                <img
-                  src={post.featured_image_url}
-                  alt={post.title}
-                  className="w-full h-40 object-cover rounded-md mb-4"
-                />
-              )}
               <h2 className="text-xl font-bold mb-2 text-foreground">{post.title}</h2>
               <p className="text-sm text-muted-foreground mb-2">
                 By {post.author.username} • {new Date(post.created_at).toLocaleDateString()}

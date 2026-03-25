@@ -32,7 +32,6 @@ export default function CreatePostModal({ open, onOpenChange }) {
   const [formData, setFormData] = useState({
     title: '',
     content_json: EMPTY_CONTENT,
-    featured_image_url: '',
     category_ids: [],
   });
 
@@ -40,7 +39,6 @@ export default function CreatePostModal({ open, onOpenChange }) {
     setFormData({
       title: '',
       content_json: EMPTY_CONTENT,
-      featured_image_url: '',
       category_ids: [],
     });
     setError(null);
@@ -129,21 +127,6 @@ export default function CreatePostModal({ open, onOpenChange }) {
               value={formData.title}
               onChange={handleInputChange}
               placeholder="Enter blog post title"
-              className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-            />
-          </div>
-
-          {/* Featured Image URL */}
-          <div>
-            <label className="block text-sm font-medium mb-1 text-foreground">
-              Featured Image URL
-            </label>
-            <input
-              type="url"
-              name="featured_image_url"
-              value={formData.featured_image_url}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
               className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
             />
           </div>
