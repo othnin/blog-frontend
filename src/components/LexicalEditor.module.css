@@ -36,6 +36,7 @@
   font-weight: 500;
   color: #374151;
   transition: background 0.1s, border-color 0.1s;
+  white-space: nowrap;
 }
 
 .toolbarBtn:hover {
@@ -49,19 +50,39 @@
   color: #1d4ed8;
 }
 
-.toolbarSelect {
-  height: 28px;
-  padding: 0 6px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #374151;
-  cursor: pointer;
+/* Dropdown trigger buttons — slightly wider to fit label + chevron */
+.toolbarDropdownBtn {
+  gap: 4px;
+  padding: 0 8px;
 }
 
-.toolbarSelect:hover {
-  border-color: #9ca3af;
+.chevron {
+  font-size: 10px;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* Font size stepper */
+.fontSizeControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.fontSizeDisplay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  background: #ffffff;
+  padding: 0 4px;
+  user-select: none;
 }
 
 .divider {
@@ -74,28 +95,16 @@
 
 /* Color picker */
 .colorLabel {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  min-width: 28px;
-  height: 28px;
   cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: 4px;
-}
-
-.colorLabel:hover {
-  background: #e5e7eb;
-  border-color: #d1d5db;
+  position: relative;
 }
 
 .colorIcon {
   font-size: 14px;
   font-weight: 700;
   color: #374151;
-  padding: 0 4px;
   line-height: 1;
+  padding-bottom: 1px;
 }
 
 .colorInput {
@@ -109,6 +118,63 @@
 .colorLabel:hover .colorInput,
 .colorLabel:focus-within .colorInput {
   pointer-events: auto;
+}
+
+/* ─── Dropdown menus (Radix UI) ──────────────────────────────────── */
+.dropdownContent {
+  min-width: 160px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  animation: fadeIn 0.1s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #374151;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.08s;
+}
+
+.dropdownItem:hover,
+.dropdownItem[data-highlighted] {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.dropdownItemActive {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.dropdownItemActive:hover,
+.dropdownItemActive[data-highlighted] {
+  background: #bfdbfe;
+}
+
+.dropdownItemDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dropdownSeparator {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
 }
 
 /* ─── Editor area ────────────────────────────────────────────────── */
@@ -218,6 +284,39 @@
   outline: 2px solid #93c5fd;
 }
 
+/* ─── YouTube embed ──────────────────────────────────────────────── */
+.youtubeWrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  margin: 12px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+}
+
+.youtubeIframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ─── Tweet embed ────────────────────────────────────────────────── */
+.tweetWrapper {
+  margin: 12px 0;
+  max-width: 550px;
+}
+
+/* ─── Horizontal rule ────────────────────────────────────────────── */
+.horizontalRule {
+  border: none;
+  border-top: 2px solid #d1d5db;
+  margin: 16px 0;
+}
+
 /* ─── Code highlight tokens ──────────────────────────────────────── */
 .tokenComment   { color: #6b7280; }
 .tokenPunctuation { color: #9ca3af; }
@@ -256,7 +355,7 @@
     color: #93c5fd;
   }
 
-  .toolbarSelect {
+  .fontSizeDisplay {
     background: #1f2937;
     border-color: #374151;
     color: #d1d5db;
@@ -265,6 +364,40 @@
   .divider { background: #374151; }
 
   .colorIcon { color: #d1d5db; }
+
+  .dropdownContent {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .dropdownItem {
+    color: #d1d5db;
+  }
+
+  .dropdownItem:hover,
+  .dropdownItem[data-highlighted] {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  .dropdownItemActive {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  .dropdownItemActive:hover,
+  .dropdownItemActive[data-highlighted] {
+    background: #1e40af;
+  }
+
+  .dropdownSeparator {
+    background: #374151;
+  }
+
+  .horizontalRule {
+    border-top-color: #4b5563;
+  }
 
   .editorRoot,
   .contentEditable {

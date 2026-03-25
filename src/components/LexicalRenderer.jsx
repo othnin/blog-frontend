@@ -1,7 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './LexicalRenderer.module.css';
+
+function TweetEmbed({ tweetUrl }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const render = () => {
+      if (window.twttr?.widgets) window.twttr.widgets.load(containerRef.current);
+    };
+    if (window.twttr) {
+      render();
+    } else {
+      const existing = document.getElementById('twitter-widget-js');
+      if (existing) {
+        existing.addEventListener('load', render, { once: true });
+      } else {
+        const script = document.createElement('script');
+        script.id = 'twitter-widget-js';
+        script.src = 'https://platform.twitter.com/widgets.js';
+        script.async = true;
+        script.onload = render;
+        document.head.appendChild(script);
+      }
+    }
+  }, [tweetUrl]);
+
+  return (
+    <div ref={containerRef} className={styles.tweetWrapper}>
+      <blockquote className="twitter-tweet">
+        <a href={tweetUrl}>{tweetUrl}</a>
+      </blockquote>
+    </div>
+  );
+}
 
 export default function LexicalRenderer({ jsonContent }) {
   const [parsedContent, setParsedContent] = useState(null);
@@ -133,6 +167,25 @@ export default function LexicalRenderer({ jsonContent }) {
             loading="lazy"
           />
         );
+
+      case 'horizontalrule':
+        return <hr key={index} className={styles.horizontalRule} />;
+
+      case 'youtube':
+        return (
+          <div key={index} className={styles.youtubeWrapper}>
+            <iframe
+              src={`https://www.youtube.com/embed/${node.videoId}`}
+              title="YouTube video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className={styles.youtubeIframe}
+            />
+          </div>
+        );
+
+      case 'tweet':
+        return <TweetEmbed key={index} tweetUrl={node.tweetUrl} />;
 
       default:
         return node.children?.map((child, idx) => renderNode(child, idx));

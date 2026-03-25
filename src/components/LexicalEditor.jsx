@@ -13,6 +13,13 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
+import {
+  HorizontalRuleNode,
+  INSERT_HORIZONTAL_RULE_COMMAND,
+} from '@lexical/react/LexicalHorizontalRuleNode';
+import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
+
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
@@ -27,6 +34,8 @@ import {
   $insertNodes,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
+  INDENT_CONTENT_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
   UNDO_COMMAND,
   REDO_COMMAND,
   DecoratorNode,
@@ -55,7 +64,7 @@ import { API_ENDPOINTS } from '@/config/api';
 
 import styles from './LexicalEditor.module.css';
 
-// ─── ImageNode ───────────────────────────────────────────────────────────────
+// ─── ImageNode ────────────────────────────────────────────────────────────────
 
 export const INSERT_IMAGE_COMMAND = createCommand('INSERT_IMAGE_COMMAND');
 
@@ -83,8 +92,6 @@ class ImageNode extends DecoratorNode {
 
 function $createImageNode(src, altText) { return new ImageNode(src, altText); }
 
-// ─── ImagePlugin ─────────────────────────────────────────────────────────────
-
 function ImagePlugin() {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
@@ -92,8 +99,7 @@ function ImagePlugin() {
       INSERT_IMAGE_COMMAND,
       ({ src, altText }) => {
         editor.update(() => {
-          const node = $createImageNode(src, altText);
-          $insertNodes([node]);
+          $insertNodes([$createImageNode(src, altText)]);
         });
         return true;
       },
@@ -103,12 +109,159 @@ function ImagePlugin() {
   return null;
 }
 
+// ─── YouTubeNode ──────────────────────────────────────────────────────────────
+
+export const INSERT_YOUTUBE_COMMAND = createCommand('INSERT_YOUTUBE_COMMAND');
+
+function extractYouTubeId(url) {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\n?#]+)/,
+  );
+  return match ? match[1] : null;
+}
+
+class YouTubeNode extends DecoratorNode {
+  static getType() { return 'youtube'; }
+  static clone(node) { return new YouTubeNode(node.__videoId, node.__key); }
+
+  constructor(videoId, key) {
+    super(key);
+    this.__videoId = videoId;
+  }
+
+  static importJSON(s) { return new YouTubeNode(s.videoId); }
+  exportJSON() {
+    return { type: 'youtube', version: 1, videoId: this.__videoId };
+  }
+
+  isInline() { return false; }
+  createDOM() {
+    const div = document.createElement('div');
+    div.className = styles.youtubeWrapper;
+    return div;
+  }
+  updateDOM() { return false; }
+
+  decorate() {
+    return (
+      <div className={styles.youtubeWrapper}>
+        <iframe
+          src={`https://www.youtube.com/embed/${this.__videoId}`}
+          title="YouTube video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className={styles.youtubeIframe}
+        />
+      </div>
+    );
+  }
+}
+
+function YouTubePlugin() {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_YOUTUBE_COMMAND,
+      ({ videoId }) => {
+        editor.update(() => {
+          $insertNodes([new YouTubeNode(videoId)]);
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+  }, [editor]);
+  return null;
+}
+
+// ─── TweetNode ────────────────────────────────────────────────────────────────
+
+export const INSERT_TWEET_COMMAND = createCommand('INSERT_TWEET_COMMAND');
+
+function TweetComponent({ tweetUrl }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const renderWidget = () => {
+      if (window.twttr?.widgets) {
+        window.twttr.widgets.load(containerRef.current);
+      }
+    };
+
+    if (window.twttr) {
+      renderWidget();
+    } else {
+      const existing = document.getElementById('twitter-widget-js');
+      if (existing) {
+        existing.addEventListener('load', renderWidget, { once: true });
+      } else {
+        const script = document.createElement('script');
+        script.id = 'twitter-widget-js';
+        script.src = 'https://platform.twitter.com/widgets.js';
+        script.async = true;
+        script.onload = renderWidget;
+        document.head.appendChild(script);
+      }
+    }
+  }, [tweetUrl]);
+
+  return (
+    <div ref={containerRef} className={styles.tweetWrapper}>
+      <blockquote className="twitter-tweet">
+        <a href={tweetUrl}>{tweetUrl}</a>
+      </blockquote>
+    </div>
+  );
+}
+
+class TweetNode extends DecoratorNode {
+  static getType() { return 'tweet'; }
+  static clone(node) { return new TweetNode(node.__tweetUrl, node.__key); }
+
+  constructor(tweetUrl, key) {
+    super(key);
+    this.__tweetUrl = tweetUrl;
+  }
+
+  static importJSON(s) { return new TweetNode(s.tweetUrl); }
+  exportJSON() {
+    return { type: 'tweet', version: 1, tweetUrl: this.__tweetUrl };
+  }
+
+  isInline() { return false; }
+  createDOM() { return document.createElement('div'); }
+  updateDOM() { return false; }
+
+  decorate() {
+    return <TweetComponent tweetUrl={this.__tweetUrl} />;
+  }
+}
+
+function TweetPlugin() {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_TWEET_COMMAND,
+      ({ tweetUrl }) => {
+        editor.update(() => {
+          $insertNodes([new TweetNode(tweetUrl)]);
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR,
+    );
+  }, [editor]);
+  return null;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const FONT_FAMILIES = [
   'Default', 'Arial', 'Courier New', 'Georgia',
   'Times New Roman', 'Trebuchet MS', 'Verdana',
 ];
-
-const FONT_SIZES = ['10px','12px','14px','16px','18px','20px','24px','28px','32px','36px','48px'];
 
 const BLOCK_TYPES = {
   paragraph: 'Paragraph',
@@ -122,13 +275,20 @@ const BLOCK_TYPES = {
   code: 'Code Block',
 };
 
+const MIN_FONT_SIZE = 8;
+const MAX_FONT_SIZE = 72;
+const DEFAULT_FONT_SIZE = 16;
+
+// ─── ToolbarPlugin ────────────────────────────────────────────────────────────
+
 function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const [blockType, setBlockType] = useState('paragraph');
+  const [fontFamily, setFontFamily] = useState('Default');
+  const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
-  const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [isCode, setIsCode] = useState(false);
   const [isLink, setIsLink] = useState(false);
   const [fontColor, setFontColor] = useState('#000000');
@@ -142,12 +302,18 @@ function ToolbarPlugin() {
     setIsBold(selection.hasFormat('bold'));
     setIsItalic(selection.hasFormat('italic'));
     setIsUnderline(selection.hasFormat('underline'));
-    setIsStrikethrough(selection.hasFormat('strikethrough'));
     setIsCode(selection.hasFormat('code'));
 
     const node = selection.anchor.getNode();
     const parent = node.getParent();
     setIsLink($isLinkNode(parent) || $isLinkNode(node));
+
+    // Read font-size and font-family from the anchor node's inline style
+    const style = node.getStyle?.() || '';
+    const sizeMatch = style.match(/font-size:\s*(\d+)px/);
+    setFontSize(sizeMatch ? parseInt(sizeMatch[1], 10) : DEFAULT_FONT_SIZE);
+    const familyMatch = style.match(/font-family:\s*([^;]+)/);
+    setFontFamily(familyMatch ? familyMatch[1].trim() : 'Default');
 
     const element =
       node.getKey() === 'root' ? node : node.getTopLevelElementOrThrow();
@@ -172,18 +338,20 @@ function ToolbarPlugin() {
 
   const noFocusSteal = (e) => e.preventDefault();
 
+  // ── Block type ──────────────────────────────────────────────────────────────
+
   const formatBlock = (type) => {
     if (type === 'bullet') {
       editor.dispatchCommand(
         blockType === 'bullet' ? REMOVE_LIST_COMMAND : INSERT_UNORDERED_LIST_COMMAND,
-        undefined
+        undefined,
       );
       return;
     }
     if (type === 'number') {
       editor.dispatchCommand(
         blockType === 'number' ? REMOVE_LIST_COMMAND : INSERT_ORDERED_LIST_COMMAND,
-        undefined
+        undefined,
       );
       return;
     }
@@ -193,10 +361,45 @@ function ToolbarPlugin() {
       if (type === 'paragraph') $setBlocksType(selection, () => $createParagraphNode());
       else if (type === 'quote')  $setBlocksType(selection, () => $createQuoteNode());
       else if (type === 'code')   $setBlocksType(selection, () => $createCodeNode());
-      else if (['h1','h2','h3','h4'].includes(type))
+      else if (['h1', 'h2', 'h3', 'h4'].includes(type))
         $setBlocksType(selection, () => $createHeadingNode(type));
     });
   };
+
+  // ── Font family ─────────────────────────────────────────────────────────────
+
+  const applyFontFamily = (family) => {
+    setFontFamily(family);
+    editor.update(() => {
+      const sel = $getSelection();
+      if (!$isRangeSelection(sel)) return;
+      sel.getNodes().forEach((n) => {
+        if (n.setStyle) {
+          const s = (n.getStyle?.() || '').replace(/font-family:\s*[^;]+;?/g, '').trim();
+          n.setStyle(family === 'Default' ? s : `${s}; font-family: ${family}`);
+        }
+      });
+    });
+  };
+
+  // ── Font size ───────────────────────────────────────────────────────────────
+
+  const applyFontSize = (size) => {
+    const clamped = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
+    setFontSize(clamped);
+    editor.update(() => {
+      const sel = $getSelection();
+      if (!$isRangeSelection(sel)) return;
+      sel.getNodes().forEach((n) => {
+        if (n.setStyle) {
+          const s = (n.getStyle?.() || '').replace(/font-size:\s*[^;]+;?/g, '').trim();
+          n.setStyle(`${s}; font-size: ${clamped}px`);
+        }
+      });
+    });
+  };
+
+  // ── Link ────────────────────────────────────────────────────────────────────
 
   const insertLink = () => {
     if (isLink) {
@@ -206,6 +409,8 @@ function ToolbarPlugin() {
       if (url) editor.dispatchCommand(TOGGLE_LINK_COMMAND, { url, target: '_blank' });
     }
   };
+
+  // ── Font color ──────────────────────────────────────────────────────────────
 
   const applyFontColor = (color) => {
     setFontColor(color);
@@ -220,6 +425,8 @@ function ToolbarPlugin() {
       });
     });
   };
+
+  // ── Image upload ─────────────────────────────────────────────────────────────
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -249,6 +456,31 @@ function ToolbarPlugin() {
     }
   };
 
+  // ── YouTube / Tweet inserts ──────────────────────────────────────────────────
+
+  const insertYouTube = () => {
+    const url = prompt('Enter YouTube URL:');
+    if (!url) return;
+    const videoId = extractYouTubeId(url);
+    if (!videoId) {
+      alert('Could not find a YouTube video ID in that URL.');
+      return;
+    }
+    editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, { videoId });
+  };
+
+  const insertTweet = () => {
+    const url = prompt('Enter X (Twitter) post URL:');
+    if (!url) return;
+    if (!url.includes('twitter.com') && !url.includes('x.com')) {
+      alert('Please enter a valid X (Twitter) post URL.');
+      return;
+    }
+    editor.dispatchCommand(INSERT_TWEET_COMMAND, { tweetUrl: url });
+  };
+
+  // ── Format button helper ─────────────────────────────────────────────────────
+
   const btn = (active, title, onClick, children) => (
     <button
       type="button"
@@ -261,114 +493,97 @@ function ToolbarPlugin() {
     </button>
   );
 
+  // ── Render ───────────────────────────────────────────────────────────────────
+
   return (
     <div className={styles.toolbar}>
+
       {/* Undo / Redo */}
-      <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn} title="Undo" onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}>&#8630;</button>
-      <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn} title="Redo" onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}>&#8631;</button>
+      <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn} title="Undo"
+        onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}>&#8630;</button>
+      <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn} title="Redo"
+        onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}>&#8631;</button>
 
       <span className={styles.divider} />
 
-      {/* Block type */}
-      <select
-        className={styles.toolbarSelect}
-        value={blockType}
-        onChange={(e) => formatBlock(e.target.value)}
-        title="Block type"
-      >
-        {Object.entries(BLOCK_TYPES).map(([val, label]) => (
-          <option key={val} value={val}>{label}</option>
-        ))}
-      </select>
+      {/* Text / Block type */}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button type="button" onMouseDown={noFocusSteal}
+            className={`${styles.toolbarBtn} ${styles.toolbarDropdownBtn}`}>
+            {BLOCK_TYPES[blockType] ?? 'Text'}
+            <span className={styles.chevron}>▾</span>
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className={styles.dropdownContent} sideOffset={4}>
+            {Object.entries(BLOCK_TYPES).map(([val, label]) => (
+              <DropdownMenu.Item
+                key={val}
+                className={`${styles.dropdownItem} ${blockType === val ? styles.dropdownItemActive : ''}`}
+                onSelect={() => formatBlock(val)}
+              >
+                {label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
 
       <span className={styles.divider} />
 
       {/* Font family */}
-      <select
-        className={styles.toolbarSelect}
-        onChange={(e) => {
-          const family = e.target.value;
-          editor.update(() => {
-            const sel = $getSelection();
-            if (!$isRangeSelection(sel)) return;
-            sel.getNodes().forEach((n) => {
-              if (n.setStyle) {
-                const s = (n.getStyle?.() || '').replace(/font-family:\s*[^;]+;?/g, '').trim();
-                n.setStyle(family === 'Default' ? s : `${s}; font-family: ${family}`);
-              }
-            });
-          });
-        }}
-        title="Font family"
-      >
-        {FONT_FAMILIES.map((f) => <option key={f} value={f}>{f}</option>)}
-      </select>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button type="button" onMouseDown={noFocusSteal}
+            className={`${styles.toolbarBtn} ${styles.toolbarDropdownBtn}`}
+            style={{ fontFamily: fontFamily === 'Default' ? undefined : fontFamily }}>
+            {fontFamily}
+            <span className={styles.chevron}>▾</span>
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className={styles.dropdownContent} sideOffset={4}>
+            {FONT_FAMILIES.map((f) => (
+              <DropdownMenu.Item
+                key={f}
+                className={`${styles.dropdownItem} ${fontFamily === f ? styles.dropdownItemActive : ''}`}
+                style={{ fontFamily: f === 'Default' ? undefined : f }}
+                onSelect={() => applyFontFamily(f)}
+              >
+                {f}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
 
-      {/* Font size */}
-      <select
-        className={styles.toolbarSelect}
-        defaultValue="16px"
-        onChange={(e) => {
-          const size = e.target.value;
-          editor.update(() => {
-            const sel = $getSelection();
-            if (!$isRangeSelection(sel)) return;
-            sel.getNodes().forEach((n) => {
-              if (n.setStyle) {
-                const s = (n.getStyle?.() || '').replace(/font-size:\s*[^;]+;?/g, '').trim();
-                n.setStyle(`${s}; font-size: ${size}`);
-              }
-            });
-          });
-        }}
-        title="Font size"
-      >
-        {FONT_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
+      {/* Font size +/- */}
+      <div className={styles.fontSizeControl}>
+        <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn}
+          title="Decrease font size" onClick={() => applyFontSize(fontSize - 1)}>
+          −
+        </button>
+        <span className={styles.fontSizeDisplay}>{fontSize}</span>
+        <button type="button" onMouseDown={noFocusSteal} className={styles.toolbarBtn}
+          title="Increase font size" onClick={() => applyFontSize(fontSize + 1)}>
+          +
+        </button>
+      </div>
 
       <span className={styles.divider} />
 
-      {/* Text format */}
-      {btn(isBold,          'Bold',          () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold'),          <strong>B</strong>)}
-      {btn(isItalic,        'Italic',        () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic'),        <em>I</em>)}
-      {btn(isUnderline,     'Underline',     () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline'),     <u>U</u>)}
-      {btn(isStrikethrough, 'Strikethrough', () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough'), <s>S</s>)}
-      {btn(isCode,          'Inline code',   () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code'),          <code>&lt;/&gt;</code>)}
+      {/* Text formatting */}
+      {btn(isBold,      'Bold',        () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold'),      <strong>B</strong>)}
+      {btn(isItalic,    'Italic',      () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic'),    <em>I</em>)}
+      {btn(isUnderline, 'Underline',   () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline'), <u>U</u>)}
+      {btn(isCode,      'Inline code', () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code'),      <code>&lt;/&gt;</code>)}
+      {btn(isLink,      'Insert / remove link', insertLink, <span>&#128279;</span>)}
 
       <span className={styles.divider} />
 
-      {/* Alignment */}
-      {btn(false, 'Align left',   () => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left'),    <span>&#8676;</span>)}
-      {btn(false, 'Align center', () => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center'),  <span>&#8596;</span>)}
-      {btn(false, 'Align right',  () => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right'),   <span>&#8677;</span>)}
-      {btn(false, 'Justify',      () => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify'), <span>&#8801;</span>)}
-
-      <span className={styles.divider} />
-
-      {/* Link */}
-      {btn(isLink, 'Insert / remove link', insertLink, <span>&#128279;</span>)}
-
-      {/* Image upload */}
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
-        style={{ display: 'none' }}
-        onChange={handleImageUpload}
-      />
-      <button
-        type="button"
-        title="Insert image"
-        onMouseDown={noFocusSteal}
-        onClick={() => imageInputRef.current?.click()}
-        disabled={isUploading}
-        className={styles.toolbarBtn}
-      >
-        {isUploading ? '...' : '\uD83D\uDDBC'}
-      </button>
-
-      {/* Text color */}
-      <label className={styles.colorLabel} title="Text color" onMouseDown={noFocusSteal}>
+      {/* Font color — native picker */}
+      <label className={`${styles.toolbarBtn} ${styles.colorLabel}`} title="Text color" onMouseDown={noFocusSteal}>
         <span className={styles.colorIcon} style={{ borderBottom: `3px solid ${fontColor}` }}>A</span>
         <input
           type="color"
@@ -377,9 +592,89 @@ function ToolbarPlugin() {
           className={styles.colorInput}
         />
       </label>
+
+      <span className={styles.divider} />
+
+      {/* Align */}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button type="button" onMouseDown={noFocusSteal}
+            className={`${styles.toolbarBtn} ${styles.toolbarDropdownBtn}`}>
+            Align <span className={styles.chevron}>▾</span>
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className={styles.dropdownContent} sideOffset={4}>
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')}>
+              Left Align
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')}>
+              Center Align
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')}>
+              Right Align
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator className={styles.dropdownSeparator} />
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)}>
+              Indent
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)}>
+              Outdent
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+
+      <span className={styles.divider} />
+
+      {/* Insert */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        style={{ display: 'none' }}
+        onChange={handleImageUpload}
+      />
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button type="button" onMouseDown={noFocusSteal}
+            className={`${styles.toolbarBtn} ${styles.toolbarDropdownBtn}`}>
+            Insert <span className={styles.chevron}>▾</span>
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className={styles.dropdownContent} sideOffset={4}>
+            <DropdownMenu.Item className={styles.dropdownItem}
+              onSelect={() => editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)}>
+              Horizontal Rule
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              className={`${styles.dropdownItem} ${isUploading ? styles.dropdownItemDisabled : ''}`}
+              onSelect={() => !isUploading && imageInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? 'Uploading…' : 'Image'}
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem} onSelect={insertYouTube}>
+              YouTube Video
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem} onSelect={insertTweet}>
+              X (Tweet)
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+
     </div>
   );
 }
+
+// ─── LexicalEditor ────────────────────────────────────────────────────────────
 
 export default function LexicalEditor({ initialValue = '', onChange }) {
   const initialConfig = {
@@ -407,12 +702,16 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
         strikethrough: styles.textStrikethrough,
         code: styles.textCode,
       },
+      hr: styles.horizontalRule,
     },
     nodes: [
       HeadingNode, QuoteNode, CodeNode, CodeHighlightNode,
       LinkNode, AutoLinkNode, ListNode, ListItemNode,
       TableNode, TableCellNode, TableRowNode,
       ImageNode,
+      HorizontalRuleNode,
+      YouTubeNode,
+      TweetNode,
     ],
     onError: (error) => console.error('Lexical error:', error),
   };
@@ -423,7 +722,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
         if (onChange) onChange(JSON.stringify(editorState.toJSON()));
       });
     },
-    [onChange]
+    [onChange],
   );
 
   return (
@@ -433,7 +732,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
         <div className={styles.editorWrapper}>
           <RichTextPlugin
             contentEditable={<ContentEditable className={styles.contentEditable} />}
-            placeholder={<div className={styles.placeholder}>Start writing your blog post...</div>}
+            placeholder={<div className={styles.placeholder}>Start writing your blog post…</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
@@ -444,6 +743,9 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
           <TabIndentationPlugin />
           <OnChangePlugin onChange={handleChange} />
           <ImagePlugin />
+          <HorizontalRulePlugin />
+          <YouTubePlugin />
+          <TweetPlugin />
         </div>
       </LexicalComposer>
     </div>
