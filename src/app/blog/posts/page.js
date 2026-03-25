@@ -5,6 +5,21 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
 import { API_ENDPOINTS } from '@/config/api';
+import { Heart } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+
+const LIKED_POSTS_KEY = 'liked_posts';
+
+function getLikedPosts() {
+  try { return new Set(JSON.parse(localStorage.getItem(LIKED_POSTS_KEY)) || []); }
+  catch { return new Set(); }
+}
+
+function saveLikedPost(slug) {
+  const liked = getLikedPosts();
+  liked.add(slug);
+  localStorage.setItem(LIKED_POSTS_KEY, JSON.stringify([...liked]));
+}
 
 export default function BlogPostsPage() {
   const [posts, setPosts] = useState([]);
@@ -12,6 +27,8 @@ export default function BlogPostsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [likedPosts, setLikedPosts] = useState(new Set());
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const { isAuthenticated } = useAuth();
 
   const searchParams = useSearchParams();
@@ -39,6 +56,10 @@ export default function BlogPostsPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    setLikedPosts(getLikedPosts());
   }, []);
 
   useEffect(() => {
@@ -75,6 +96,26 @@ export default function BlogPostsPage() {
     fetchPosts(selectedCategory, searchQuery);
   }, [selectedCategory, searchQuery, fetchPosts]);
 
+  const handleLike = async (e, postSlug) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) { setShowAuthDialog(true); return; }
+    if (likedPosts.has(postSlug)) return;
+    try {
+      const response = await fetch(API_ENDPOINTS.blog.likePost(postSlug), { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setPosts((prev) =>
+          prev.map((p) => p.slug === postSlug ? { ...p, like_count: data.like_count } : p)
+        );
+        saveLikedPost(postSlug);
+        setLikedPosts((prev) => new Set([...prev, postSlug]));
+      }
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
+  };
+
   const handleCategoryClick = (slug) => {
     const params = new URLSearchParams();
     if (slug && slug !== selectedCategory) {
@@ -95,6 +136,33 @@ export default function BlogPostsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Join the conversation</DialogTitle>
+            <DialogDescription>
+              Please create an account if you want to contribute.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-start gap-2">
+            <Link
+              href="/register"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              Create account
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 text-sm font-medium"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              Log in
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-bold text-foreground">Blog Posts</h1>
         {isAuthenticated && userRole === 'editor' && (
@@ -177,9 +245,14 @@ export default function BlogPostsPage() {
                   ))}
                 </div>
               )}
-              <p className="text-sm text-muted-foreground">
-                Views: {post.view_count}
-              </p>
+              <button
+                onClick={(e) => handleLike(e, post.slug)}
+                disabled={likedPosts.has(post.slug)}
+                className={`flex items-center gap-1 text-sm transition-colors ${likedPosts.has(post.slug) ? 'text-red-500 cursor-default' : 'text-muted-foreground hover:text-red-500'}`}
+              >
+                <Heart className={`w-4 h-4 ${likedPosts.has(post.slug) ? 'fill-current' : ''}`} />
+                {post.like_count}
+              </button>
             </Link>
           ))}
         </div>

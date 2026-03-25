@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Heart } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import LexicalRenderer from '@/components/LexicalRenderer';
 import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
@@ -35,6 +37,11 @@ export default function BlogDetailPage() {
   // Delete state
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Like state
+  const [likeCount, setLikeCount] = useState(0);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
 
   // Profile popup
@@ -47,7 +54,14 @@ export default function BlogDetailPage() {
         if (!r.ok) throw new Error('Failed to fetch blog post');
         return r.json();
       })
-      .then(setPost)
+      .then((data) => {
+        setPost(data);
+        setLikeCount(data.like_count ?? 0);
+        try {
+          const liked = JSON.parse(localStorage.getItem('liked_posts')) || [];
+          setHasLiked(liked.includes(data.slug));
+        } catch { /* ignore */ }
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -79,6 +93,25 @@ export default function BlogDetailPage() {
     setEditMode(false);
     setEditForm(null);
     setSaveError(null);
+  };
+
+  const handleLike = async () => {
+    if (!isAuthenticated) { setShowAuthDialog(true); return; }
+    if (hasLiked) return;
+    try {
+      const response = await fetch(API_ENDPOINTS.blog.likePost(slug), { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setLikeCount(data.like_count);
+        setHasLiked(true);
+        try {
+          const liked = JSON.parse(localStorage.getItem('liked_posts')) || [];
+          localStorage.setItem('liked_posts', JSON.stringify([...liked, slug]));
+        } catch { /* ignore */ }
+      }
+    } catch (err) {
+      console.error('Error liking post:', err);
+    }
   };
 
   const handleSave = async () => {
@@ -162,6 +195,33 @@ export default function BlogDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Join the conversation</DialogTitle>
+            <DialogDescription>
+              Please create an account if you want to contribute.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-start gap-2">
+            <Link
+              href="/register"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              Create account
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 text-sm font-medium"
+              onClick={() => setShowAuthDialog(false)}
+            >
+              Log in
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <Link href="/blog/posts" className="text-primary hover:underline">← Back to posts</Link>
@@ -286,7 +346,14 @@ export default function BlogDetailPage() {
             <span>•</span>
             <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
             <span>•</span>
-            <span>{post.view_count} views</span>
+            <button
+              onClick={handleLike}
+              disabled={hasLiked}
+              className={`flex items-center gap-1 transition-colors ${hasLiked ? 'text-red-500 cursor-default' : 'hover:text-red-500'}`}
+            >
+              <Heart className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
+              {likeCount}
+            </button>
           </div>
 
           {post.categories.length > 0 && (
