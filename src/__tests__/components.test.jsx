@@ -1,6 +1,6 @@
 /**
  * Tests for FE-010 to FE-020: Frontend components
- * Covers: CreatePostModal, CommentThread, UserProfilePopup, SettingsModal,
+ * Covers: Create post flow, CommentThread, UserProfilePopup, SettingsModal,
  *         Navbar search bar, Dark mode, Lexical Editor/Renderer, AuthProvider,
  *         CategorySelector, and Avatar display
  */
@@ -36,9 +36,9 @@ jest.mock('next-themes', () => ({
   ThemeProvider: ({ children }) => <div>{children}</div>,
 }));
 
-// ─── FE-010: Create Post Modal Tests ────────────────────────────────────────────
+// ─── FE-010: Create Post Page Tests ─────────────────────────────────────────────
 
-describe('FE-010: CreatePostModal Component', () => {
+describe('FE-010: Create Post Page (/dashboard/create-post)', () => {
   it('renders create post button', () => {
     // Component would render a button to open modal
     const TestComponent = () => (

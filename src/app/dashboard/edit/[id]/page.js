@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
+import TagSelector from '@/components/TagSelector';
 
 export default function EditPostPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -19,6 +20,7 @@ export default function EditPostPage() {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [post, setPost] = useState(null);
   const [canEdit, setCanEdit] = useState(false);
 
@@ -35,7 +37,8 @@ export default function EditPostPage() {
         type: 'root'
       }
     }),
-    category_ids: [],
+    category_id: null,
+    tag_ids: [],
     status: 'draft'
   });
 
@@ -47,14 +50,13 @@ export default function EditPostPage() {
     }
 
     if (isAuthenticated && !authLoading) {
-      const token = localStorage.getItem('access_token');
-      fetchWithAuth(API_ENDPOINTS.auth.me, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      fetchWithAuth(API_ENDPOINTS.auth.me)
         .then(r => r.json())
         .then(data => {
-          setUserRole(data.profile?.role);
-          if (data.profile?.role !== 'editor' && data.profile?.role !== 'admin') {
+          const role = data.profile?.role;
+          setUserRole(role);
+          setCurrentUserId(data.id);
+          if (role !== 'editor' && role !== 'admin') {
             router.push('/');
           }
         })
@@ -70,22 +72,23 @@ export default function EditPostPage() {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('access_token');
 
-        // Fetch the post by ID
-        const response = await fetchWithAuth(`${API_ENDPOINTS.blog.posts}${postId}/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth(API_ENDPOINTS.blog.myPosts);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch post');
+          throw new Error('Failed to fetch your posts');
         }
 
-        const postData = await response.json();
+        const allPosts = await response.json();
+        const postData = allPosts.find(p => p.id === parseInt(postId, 10));
+
+        if (!postData) {
+          throw new Error('Post not found');
+        }
+
         setPost(postData);
 
-        // Check if user can edit this post
-        const isOwner = postData.author.id === JSON.parse(localStorage.getItem('user_id') || '0');
+        const isOwner = postData.author.id === currentUserId;
         const isAdmin = userRole === 'admin';
 
         if (!isOwner && !isAdmin) {
@@ -93,11 +96,11 @@ export default function EditPostPage() {
           setCanEdit(false);
         } else {
           setCanEdit(true);
-          // Populate form with post data
           setFormData({
             title: postData.title,
             content_json: postData.content_json,
-            category_ids: postData.categories.map(c => c.id),
+            category_id: postData.category?.id ?? null,
+            tag_ids: postData.tags?.map(t => t.id) ?? [],
             status: postData.status
           });
         }
@@ -109,10 +112,10 @@ export default function EditPostPage() {
       }
     };
 
-    if (postId && isAuthenticated && userRole) {
+    if (postId && isAuthenticated && userRole && currentUserId) {
       fetchPost();
     }
-  }, [postId, isAuthenticated, userRole]);
+  }, [postId, isAuthenticated, userRole, currentUserId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -134,18 +137,9 @@ export default function EditPostPage() {
       setSubmitting(true);
       setError(null);
 
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setError('Authentication token not found. Please login again.');
-        router.push('/login');
-        return;
-      }
-
-      const response = await fetchWithAuth(`${API_ENDPOINTS.blog.posts}${postId}/`, {
+      const response = await fetchWithAuth(`${API_ENDPOINTS.blog.posts}/${postId}/`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
@@ -226,14 +220,25 @@ export default function EditPostPage() {
           />
         </div>
 
-        {/* Categories */}
+        {/* Category */}
         <div>
           <label className="block text-sm font-medium mb-2 text-foreground">
-            Categories
+            Category
           </label>
           <CategorySelector
-            selectedIds={formData.category_ids}
-            onChange={(ids) => setFormData((prev) => ({ ...prev, category_ids: ids }))}
+            selectedId={formData.category_id}
+            onChange={(id) => setFormData((prev) => ({ ...prev, category_id: id }))}
+          />
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Tags
+          </label>
+          <TagSelector
+            selectedIds={formData.tag_ids}
+            onChange={(ids) => setFormData((prev) => ({ ...prev, tag_ids: ids }))}
           />
         </div>
 
@@ -265,7 +270,7 @@ export default function EditPostPage() {
             {submitting ? 'Updating...' : 'Update Post'}
           </button>
           <Link
-            href={post ? `/blog/${post.slug}` : '/blog/posts'}
+            href={post?.status === 'published' ? `/blog/${post.slug}` : '/blog/posts'}
             className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 font-medium"
           >
             Cancel

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import LexicalRenderer from '@/components/LexicalRenderer';
 import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
+import TagSelector from '@/components/TagSelector';
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import CommentThread from '@/components/CommentThread';
@@ -20,7 +21,7 @@ export default function BlogDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug;
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, username, loading: authLoading } = useAuth();
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,23 +49,49 @@ export default function BlogDetailPage() {
   const [profilePopup, setProfilePopup] = useState(null);
 
   useEffect(() => {
-    if (!slug) return;
-    fetch(`/api/blog/posts/${slug}`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to fetch blog post');
-        return r.json();
-      })
-      .then((data) => {
-        setPost(data);
-        setLikeCount(data.like_count ?? 0);
-        try {
-          const liked = JSON.parse(localStorage.getItem('liked_posts')) || [];
-          setHasLiked(liked.includes(data.slug));
-        } catch { /* ignore */ }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [slug]);
+    if (!slug || authLoading || post) return;
+
+    const loadPost = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/blog/posts/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPost(data);
+          setLikeCount(data.like_count ?? 0);
+          try {
+            const liked = JSON.parse(localStorage.getItem('liked_posts')) || [];
+            setHasLiked(liked.includes(data.slug));
+          } catch { /* ignore */ }
+          return;
+        }
+
+        // Private posts (draft/scheduled/archived) are invisible to the public API.
+        // Let the owner see their own post by checking their private list.
+        if (res.status === 404 && isAuthenticated) {
+          const myRes = await fetchWithAuth(API_ENDPOINTS.blog.myPosts);
+          if (myRes.ok) {
+            const myPosts = await myRes.json();
+            const owned = myPosts.find((p) => p.slug === slug);
+            if (owned) {
+              setPost(owned);
+              setLikeCount(owned.like_count ?? 0);
+              return;
+            }
+          }
+        }
+
+        throw new Error('Post not found');
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPost();
+  }, [slug, isAuthenticated, authLoading, post]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -83,6 +110,7 @@ export default function BlogDetailPage() {
       title: post.title,
       content_json: post.content_json,
       category_id: post.category?.id ?? null,
+      tag_ids: post.tags?.map(t => t.id) ?? [],
       status: post.status,
     });
     setSaveError(null);
@@ -136,8 +164,12 @@ export default function BlogDetailPage() {
       setPost(updated);
       setEditMode(false);
       setEditForm(null);
-      // If the slug changed (title was edited), navigate to the new URL
-      if (updated.slug !== slug) {
+
+      if (updated.status !== 'published') {
+        // Non-published posts are invisible to the public API — go to the edit page
+        router.replace(`/dashboard/edit/${updated.id}`);
+      } else if (updated.slug !== slug) {
+        // Published but slug changed (title edited) — follow to the new URL
         router.replace(`/blog/${updated.slug}`);
       }
     } catch (err) {
@@ -294,6 +326,15 @@ export default function BlogDetailPage() {
             />
           </div>
 
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-foreground">Tags</label>
+            <TagSelector
+              selectedIds={editForm.tag_ids}
+              onChange={(ids) => setEditForm((f) => ({ ...f, tag_ids: ids }))}
+            />
+          </div>
+
           {/* Content editor — key forces remount with current content */}
           <div>
             <label className="block text-sm font-medium mb-1 text-foreground">Content *</label>
@@ -357,10 +398,24 @@ export default function BlogDetailPage() {
           </div>
 
           {post.category && (
-            <div className="mb-6">
+            <div className="mb-3">
               <span className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded">
                 {post.category.name}
               </span>
+            </div>
+          )}
+
+          {post.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {post.tags.map((tag) => (
+                <Link
+                  key={tag.id}
+                  href={`/blog/tags/${tag.slug}`}
+                  className="text-xs px-2 py-1 rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                >
+                  #{tag.name}
+                </Link>
+              ))}
             </div>
           )}
 
@@ -375,8 +430,8 @@ export default function BlogDetailPage() {
         </article>
       )}
 
-      {/* ── COMMENTS ── */}
-      {!editMode && post && (
+      {/* ── COMMENTS ── only for published posts */}
+      {!editMode && post && post.status === 'published' && (
         <section className="mt-8">
           <CommentThread postId={post.id} />
         </section>

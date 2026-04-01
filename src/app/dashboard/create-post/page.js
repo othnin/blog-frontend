@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import LexicalEditor from '@/components/LexicalEditor';
 import CategorySelector from '@/components/CategorySelector';
+import TagSelector from '@/components/TagSelector';
 
 export default function CreatePostPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -30,51 +31,27 @@ export default function CreatePostPage() {
       }
     }),
     category_id: null,
+    tag_ids: [],
     status: 'draft'
   });
 
   useEffect(() => {
-    // Check permissions
-    if (!authLoading && (!isAuthenticated)) {
-      console.log('⚠️ Not authenticated, redirecting to login');
+    if (!authLoading && !isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    // Fetch user role if authenticated
     if (isAuthenticated && !authLoading) {
-      const token = localStorage.getItem('access_token');
-      console.log('🔍 Fetching user data from:', API_ENDPOINTS.auth.me);
-      console.log('🔑 Token exists:', !!token);
-      
       fetchWithAuth(API_ENDPOINTS.auth.me)
-        .then(r => {
-          console.log('📡 Response status:', r.status);
-          return r.json();
-        })
+        .then(r => r.json())
         .then(data => {
-          console.log('📦 Full response data:', data);
-          console.log('👤 Profile object:', data.profile);
-          console.log('🎭 Role extracted:', data.profile?.role);
-          
-          setUserRole(data.profile?.role);
-          
           const role = data.profile?.role;
+          setUserRole(role);
           if (role !== 'editor' && role !== 'admin') {
-            console.log('❌ User role not authorized. Role:', role);
-            console.log('✅ Expected roles: editor or admin');
             router.push('/');
-          } else {
-            console.log('✅ User authorized with role:', role);
           }
         })
-        .catch(err => {
-          console.error('💥 Error fetching user:', err);
-          console.error('Error details:', {
-            message: err.message,
-            stack: err.stack
-          });
-        });
+        .catch(() => {});
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -98,13 +75,6 @@ export default function CreatePostPage() {
       setSubmitting(true);
       setError(null);
 
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setError('Authentication token not found. Please login again.');
-        router.push('/login');
-        return;
-      }
-
       const response = await fetchWithAuth(API_ENDPOINTS.blog.posts, {
         method: 'POST',
         headers: {
@@ -119,16 +89,19 @@ export default function CreatePostPage() {
       }
 
       const newPost = await response.json();
-      router.push(`/blog/${newPost.slug}`);
+      if (newPost.status === 'published') {
+        router.push(`/blog/${newPost.slug}`);
+      } else {
+        router.push(`/dashboard/edit/${newPost.id}`);
+      }
     } catch (err) {
-      console.error('Error creating post:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (authLoading) {
+  if (authLoading || (!userRole && isAuthenticated)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <p className="text-muted-foreground">Loading...</p>
@@ -137,32 +110,15 @@ export default function CreatePostPage() {
   }
 
   if (!isAuthenticated || (userRole !== 'editor' && userRole !== 'admin')) {
-    console.log('🚫 PERMISSION CHECK FAILED');
-    console.log('  isAuthenticated:', isAuthenticated);
-    console.log('  userRole:', userRole);
-    console.log('  userRole === "editor":', userRole === 'editor');
-    console.log('  userRole === "admin":', userRole === 'admin');
-    
     return (
       <div className="container mx-auto px-4 py-8">
         <p className="text-red-500">You don&apos;t have permission to create posts.</p>
-        <details style={{ marginTop: '1rem', padding: '1rem', border: '1px solid red' }}>
-          <summary style={{ cursor: 'pointer' }}>Debug Info</summary>
-          <pre style={{ fontSize: '12px', overflow: 'auto' }}>
-{JSON.stringify({
-  isAuthenticated,
-  userRole,
-  hasToken: !!localStorage.getItem('access_token'),
-  endpoint: API_ENDPOINTS.auth.me,
-}, null, 2)}
-          </pre>
-        </details>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
       <h1 className="text-4xl font-bold mb-8 text-foreground">Create New Blog Post</h1>
 
       {error && (
@@ -193,7 +149,7 @@ export default function CreatePostPage() {
           <label className="block text-sm font-medium mb-2 text-foreground">
             Content *
           </label>
-          <LexicalEditor 
+          <LexicalEditor
             initialValue={formData.content_json}
             onChange={(jsonContent) => {
               setFormData((prev) => ({
@@ -212,6 +168,17 @@ export default function CreatePostPage() {
           <CategorySelector
             selectedId={formData.category_id}
             onChange={(id) => setFormData((prev) => ({ ...prev, category_id: id }))}
+          />
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Tags
+          </label>
+          <TagSelector
+            selectedIds={formData.tag_ids}
+            onChange={(ids) => setFormData((prev) => ({ ...prev, tag_ids: ids }))}
           />
         </div>
 
@@ -250,13 +217,6 @@ export default function CreatePostPage() {
           </Link>
         </div>
       </form>
-
-      <div className="mt-8 p-4 bg-green-500/10 border border-green-500 text-green-600 rounded-lg">
-        <p className="font-medium mb-2">✓ Lexical Editor Integrated</p>
-        <p className="text-sm">
-          You can now use the visual Lexical editor to write your blog posts. The content is automatically saved as JSON format.
-        </p>
-      </div>
     </div>
   );
 }

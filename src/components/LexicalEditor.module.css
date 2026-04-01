@@ -7,6 +7,36 @@
   overflow: hidden;
   background: #ffffff;
   color: #111827;
+  min-height: 200px;
+}
+
+/* ─── Resize handle ──────────────────────────────────────────────── */
+.resizeHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 12px;
+  background: #f3f4f6;
+  border-top: 1px solid #d1d5db;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.resizeHandle:hover {
+  background: #e5e7eb;
+}
+
+.resizeGrip {
+  display: block;
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: #9ca3af;
+}
+
+.resizeHandle:hover .resizeGrip {
+  background: #6b7280;
 }
 
 /* ─── Toolbar ────────────────────────────────────────────────────── */
@@ -181,6 +211,7 @@
 .editorWrapper {
   position: relative;
   flex: 1;
+  overflow-y: auto;
 }
 
 .editorRoot {
@@ -271,17 +302,42 @@
 }
 .link:hover { color: #1d4ed8; }
 
+.imageWrapper {
+  position: relative;
+  display: inline-block;
+  margin: 8px 0;
+  max-width: 100%;
+}
+
 .editorImage {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
-  margin: 4px 0;
   cursor: default;
   display: block;
 }
 
-.editorImage:hover {
-  outline: 2px solid #93c5fd;
+.imageDeleteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.imageDeleteBtn:hover {
+  background: rgba(220, 38, 38, 0.9);
 }
 
 /* ─── YouTube embed ──────────────────────────────────────────────── */
@@ -397,6 +453,23 @@
 
   .horizontalRule {
     border-top-color: #4b5563;
+  }
+
+  .resizeHandle {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .resizeHandle:hover {
+    background: #1f2937;
+  }
+
+  .resizeGrip {
+    background: #4b5563;
+  }
+
+  .resizeHandle:hover .resizeGrip {
+    background: #6b7280;
   }
 
   .editorRoot,

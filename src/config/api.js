@@ -17,9 +17,12 @@ export const API_ENDPOINTS = {
     posts: '/api/blog/posts',
     categories: '/api/blog/categories',
     myPosts: '/api/blog/my-posts',
+    myPost: (id) => `/api/blog/my-posts/${id}`,
     uploadImage: '/api/blog/upload-image',
     comments: (postId) => `/api/blog/posts/${postId}/comments/`,
     comment: (commentId) => `/api/blog/comments/${commentId}/`,
     likePost: (slug) => `/api/blog/posts/${slug}/like/`,
+    tags: '/api/blog/tags',
+    tag: (id) => `/api/blog/tags/${id}`,
   },
 };

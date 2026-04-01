@@ -7,11 +7,13 @@ export async function GET(request) {
   const limit = searchParams.get('limit');
   const category = searchParams.get('category');
   const search = searchParams.get('search');
+  const tags = searchParams.get('tags');
 
   const url = new URL(`${DJANGO_BASE_URL}/api/blog/posts/`);
   if (limit) url.searchParams.set('limit', limit);
   if (category) url.searchParams.set('category', category);
   if (search) url.searchParams.set('search', search);
+  if (tags) url.searchParams.set('tags', tags);
 
   console.log(`[blog/posts] Fetching → ${url.toString()}`);
 

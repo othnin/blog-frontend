@@ -32,6 +32,7 @@ import {
   $isRangeSelection,
   $createParagraphNode,
   $insertNodes,
+  $getNodeByKey,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
   INDENT_CONTENT_COMMAND,
@@ -68,6 +69,39 @@ import styles from './LexicalEditor.module.css';
 
 export const INSERT_IMAGE_COMMAND = createCommand('INSERT_IMAGE_COMMAND');
 
+function ImageComponent({ src, altText, nodeKey, editor }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  };
+
+  return (
+    <div
+      className={styles.imageWrapper}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <img src={src} alt={altText} className={styles.editorImage} />
+      {isHovered && (
+        <button
+          type="button"
+          className={styles.imageDeleteBtn}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={handleDelete}
+          title="Remove image"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
+
 class ImageNode extends DecoratorNode {
   static getType() { return 'image'; }
   static clone(node) { return new ImageNode(node.__src, node.__altText, node.__key); }
@@ -83,10 +117,18 @@ class ImageNode extends DecoratorNode {
     return { type: 'image', version: 1, src: this.__src, altText: this.__altText };
   }
 
-  createDOM() { return document.createElement('span'); }
+  isInline() { return false; }
+  createDOM() { return document.createElement('div'); }
   updateDOM() { return false; }
-  decorate() {
-    return <img src={this.__src} alt={this.__altText} className={styles.editorImage} />;
+  decorate(editor) {
+    return (
+      <ImageComponent
+        src={this.__src}
+        altText={this.__altText}
+        nodeKey={this.__key}
+        editor={editor}
+      />
+    );
   }
 }
 
@@ -99,7 +141,14 @@ function ImagePlugin() {
       INSERT_IMAGE_COMMAND,
       ({ src, altText }) => {
         editor.update(() => {
-          $insertNodes([$createImageNode(src, altText)]);
+          const imageNode = $createImageNode(src, altText);
+          $insertNodes([imageNode]);
+          // Always ensure a paragraph follows so the cursor has somewhere to go
+          if (imageNode.getNextSibling() === null) {
+            const paragraph = $createParagraphNode();
+            imageNode.insertAfter(paragraph);
+            paragraph.select();
+          }
         });
         return true;
       },
@@ -677,6 +726,34 @@ function ToolbarPlugin() {
 // ─── LexicalEditor ────────────────────────────────────────────────────────────
 
 export default function LexicalEditor({ initialValue = '', onChange }) {
+  const containerRef = useRef(null);
+  const [editorHeight, setEditorHeight] = useState(null); // null = use CSS default
+  const resizeCleanupRef = useRef(null);
+
+  // Cancel any active drag if the editor unmounts mid-drag
+  useEffect(() => () => resizeCleanupRef.current?.(), []);
+
+  const handleResizeMouseDown = useCallback((e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = containerRef.current?.getBoundingClientRect().height ?? 400;
+
+    const onMouseMove = (moveEvent) => {
+      const newHeight = Math.max(200, startHeight + (moveEvent.clientY - startY));
+      setEditorHeight(newHeight);
+    };
+
+    const cleanup = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', cleanup);
+      resizeCleanupRef.current = null;
+    };
+
+    resizeCleanupRef.current = cleanup;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', cleanup);
+  }, []);
+
   const initialConfig = {
     namespace: 'BlogEditor',
     editorState: initialValue || undefined,
@@ -726,7 +803,11 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
   );
 
   return (
-    <div className={styles.editorContainer}>
+    <div
+      ref={containerRef}
+      className={styles.editorContainer}
+      style={editorHeight ? { height: editorHeight } : undefined}
+    >
       <LexicalComposer initialConfig={initialConfig}>
         <ToolbarPlugin />
         <div className={styles.editorWrapper}>
@@ -748,6 +829,9 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
           <TweetPlugin />
         </div>
       </LexicalComposer>
+      <div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown}>
+        <span className={styles.resizeGrip} />
+      </div>
     </div>
   );
 }
