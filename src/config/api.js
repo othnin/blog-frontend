@@ -25,4 +25,18 @@ export const API_ENDPOINTS = {
     tags: '/api/blog/tags',
     tag: (id) => `/api/blog/tags/${id}`,
   },
+  recipes: {
+    list:          '/api/recipes/',
+    detail:        (slug) => `/api/recipes/${slug}/`,
+    create:        '/api/recipes/',
+    update:        (slug) => `/api/recipes/${slug}/`,
+    delete:        (slug) => `/api/recipes/${slug}/`,
+    myRecipes:     '/api/recipes/my-recipes/',
+    myRecipe:      (id) => `/api/recipes/my-recipes/${id}/`,
+    rate:          (id) => `/api/recipes/${id}/rate/`,
+    rating:        (id) => `/api/recipes/${id}/rating/`,
+    comments:      (id) => `/api/recipes/${id}/comments/`,
+    comment:       (id) => `/api/recipes/comments/${id}/`,
+    dietaryLabels: '/api/recipes/dietary-labels/',
+  },
 };

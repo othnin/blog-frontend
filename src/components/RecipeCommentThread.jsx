@@ -1,59 +1,40 @@
 'use client';
 
+/**
+ * RecipeCommentThread — identical to CommentThread but uses recipe comment endpoints.
+ * Accepts recipeId instead of postId.
+ */
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import LexicalRenderer from '@/components/LexicalRenderer';
 import CommentEditor from '@/components/CommentEditor';
-import { User } from 'lucide-react';
 import UserProfilePopup from '@/components/UserProfilePopup';
+import { User } from 'lucide-react';
 
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
 }
 
 function CommentNode({
-  comment,
-  depth,
-  postId,
-  collapsed,
-  toggleCollapse,
-  replyingTo,
-  setReplyingTo,
-  editingId,
-  setEditingId,
-  submitting,
-  handleReply,
-  handleEdit,
-  handleDelete,
-  isAuthenticated,
-  username,
-  userRole,
-  onUsernameClick,
+  comment, depth, recipeId, collapsed, toggleCollapse,
+  replyingTo, setReplyingTo, editingId, setEditingId,
+  submitting, handleReply, handleEdit, handleDelete,
+  isAuthenticated, username, userRole, onUsernameClick,
 }) {
-  const hasReplies = comment.replies && comment.replies.length > 0;
+  const hasReplies = comment.replies?.length > 0;
   const isCollapsed = collapsed[comment.id] ?? true;
-
-  const canEdit =
-    !comment.is_deleted && isAuthenticated && comment.author?.username === username;
-  const canDelete =
-    !comment.is_deleted &&
-    isAuthenticated &&
+  const canEdit = !comment.is_deleted && isAuthenticated && comment.author?.username === username;
+  const canDelete = !comment.is_deleted && isAuthenticated &&
     (comment.author?.username === username || userRole === 'admin');
-
   const authorAvatarUrl = !comment.is_deleted ? comment.author?.avatar_url : null;
 
   return (
     <div style={{ marginLeft: depth > 0 ? '1.25rem' : 0 }} className="mt-3">
       <div className="flex gap-2 items-start">
-        {/* Expand/collapse toggle */}
         <div className="flex-shrink-0 w-5 mt-1">
           {hasReplies && (
             <button
@@ -65,8 +46,6 @@ function CommentNode({
             </button>
           )}
         </div>
-
-        {/* Author avatar */}
         <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-muted flex items-center justify-center mt-0.5">
           {authorAvatarUrl ? (
             <img src={authorAvatarUrl} alt="" className="w-full h-full object-cover" />
@@ -74,9 +53,7 @@ function CommentNode({
             <User className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
-
         <div className="flex-1 min-w-0">
-          {/* Comment header */}
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-1">
             {comment.is_deleted ? (
               <span className="font-medium text-foreground">[deleted]</span>
@@ -94,7 +71,6 @@ function CommentNode({
             )}
           </div>
 
-          {/* Comment body */}
           {comment.is_deleted ? (
             <p className="text-muted-foreground italic text-sm">This comment was deleted.</p>
           ) : editingId === comment.id ? (
@@ -105,48 +81,26 @@ function CommentNode({
               onCancel={() => setEditingId(null)}
             />
           ) : (
-            <div className="text-sm">
-              <LexicalRenderer jsonContent={comment.content_json} />
-            </div>
+            <div className="text-sm"><LexicalRenderer jsonContent={comment.content_json} /></div>
           )}
 
-          {/* Action row */}
           {!comment.is_deleted && editingId !== comment.id && (
             <div className="flex gap-3 text-xs text-muted-foreground mt-1">
               {isAuthenticated && (
-                <button
-                  onClick={() => {
-                    setReplyingTo(comment.id);
-                    setEditingId(null);
-                  }}
-                  className="hover:text-foreground transition-colors"
-                >
-                  Reply
-                </button>
+                <button onClick={() => { setReplyingTo(comment.id); setEditingId(null); }}
+                  className="hover:text-foreground transition-colors">Reply</button>
               )}
               {canEdit && (
-                <button
-                  onClick={() => {
-                    setEditingId(comment.id);
-                    setReplyingTo(null);
-                  }}
-                  className="hover:text-foreground transition-colors"
-                >
-                  Edit
-                </button>
+                <button onClick={() => { setEditingId(comment.id); setReplyingTo(null); }}
+                  className="hover:text-foreground transition-colors">Edit</button>
               )}
               {canDelete && (
-                <button
-                  onClick={() => handleDelete(comment.id)}
-                  className="hover:text-red-500 transition-colors"
-                >
-                  Delete
-                </button>
+                <button onClick={() => handleDelete(comment.id)}
+                  className="hover:text-red-500 transition-colors">Delete</button>
               )}
             </div>
           )}
 
-          {/* Inline reply editor */}
           {replyingTo === comment.id && (
             <div className="mt-2">
               <CommentEditor
@@ -159,7 +113,6 @@ function CommentNode({
         </div>
       </div>
 
-      {/* Recursive children */}
       {!isCollapsed && hasReplies && (
         <div className="border-l border-border ml-2.5 pl-0">
           {comment.replies.map((reply) => (
@@ -167,7 +120,7 @@ function CommentNode({
               key={reply.id}
               comment={reply}
               depth={depth + 1}
-              postId={postId}
+              recipeId={recipeId}
               collapsed={collapsed}
               toggleCollapse={toggleCollapse}
               replyingTo={replyingTo}
@@ -190,28 +143,25 @@ function CommentNode({
   );
 }
 
-export default function CommentThread({ postId }) {
+export default function RecipeCommentThread({ recipeId }) {
   const { isAuthenticated, username, avatar } = useAuth();
 
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [collapsed, setCollapsed] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [topLevelOpen, setTopLevelOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-
   const [userRole, setUserRole] = useState(null);
-  const [profilePopup, setProfilePopup] = useState(null); // { username, anchorRect }
+  const [profilePopup, setProfilePopup] = useState(null);
 
   const openProfilePopup = useCallback((uname, anchorRect) => {
     setProfilePopup({ username: uname, anchorRect });
   }, []);
 
-  // Fetch user role for admin delete check
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchWithAuth(API_ENDPOINTS.auth.me)
@@ -221,115 +171,70 @@ export default function CommentThread({ postId }) {
   }, [isAuthenticated]);
 
   const fetchComments = useCallback(() => {
-    if (!postId) return;
+    if (!recipeId) return;
     setError(null);
-    fetch(API_ENDPOINTS.blog.comments(postId))
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to load comments');
-        return r.json();
-      })
-      .then((data) => setComments(data))
+    fetch(API_ENDPOINTS.recipes.comments(recipeId))
+      .then((r) => { if (!r.ok) throw new Error('Failed to load comments'); return r.json(); })
+      .then(setComments)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [postId]);
+  }, [recipeId]);
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+  useEffect(() => { fetchComments(); }, [fetchComments]);
 
-  const toggleCollapse = useCallback((commentId) => {
-    setCollapsed((prev) => ({ ...prev, [commentId]: !(prev[commentId] ?? true) }));
+  const toggleCollapse = useCallback((id) => {
+    setCollapsed((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
   }, []);
 
+  const post = async (url, body) => {
+    const res = await fetchWithAuth(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res;
+  };
+
   const handleCreate = async (contentJson) => {
-    setSubmitting(true);
-    setSubmitError(null);
+    setSubmitting(true); setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comments(postId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_json: contentJson }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setSubmitError(data.detail || 'Failed to post comment');
-        return;
-      }
-      setTopLevelOpen(false);
-      fetchComments();
-    } catch {
-      setSubmitError('An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
+      const res = await post(API_ENDPOINTS.recipes.comments(recipeId), { content_json: contentJson });
+      if (!res.ok) { setSubmitError((await res.json()).detail || 'Failed to post comment'); return; }
+      setTopLevelOpen(false); fetchComments();
+    } catch { setSubmitError('An error occurred'); } finally { setSubmitting(false); }
   };
 
   const handleReply = async (parentId, contentJson) => {
-    setSubmitting(true);
-    setSubmitError(null);
+    setSubmitting(true); setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comments(postId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_json: contentJson, parent_id: parentId }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setSubmitError(data.detail || 'Failed to post reply');
-        return;
-      }
+      const res = await post(API_ENDPOINTS.recipes.comments(recipeId), { content_json: contentJson, parent_id: parentId });
+      if (!res.ok) { setSubmitError((await res.json()).detail || 'Failed to post reply'); return; }
       setReplyingTo(null);
-      // Auto-expand the parent so the new reply is visible
       setCollapsed((prev) => ({ ...prev, [parentId]: false }));
       fetchComments();
-    } catch {
-      setSubmitError('An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setSubmitError('An error occurred'); } finally { setSubmitting(false); }
   };
 
   const handleEdit = async (commentId, contentJson) => {
-    setSubmitting(true);
-    setSubmitError(null);
+    setSubmitting(true); setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comment(commentId), {
+      const res = await fetchWithAuth(API_ENDPOINTS.recipes.comment(commentId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_json: contentJson }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        setSubmitError(data.detail || 'Failed to update comment');
-        return;
-      }
-      setEditingId(null);
-      fetchComments();
-    } catch {
-      setSubmitError('An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
+      if (!res.ok) { setSubmitError((await res.json()).detail || 'Failed to update comment'); return; }
+      setEditingId(null); fetchComments();
+    } catch { setSubmitError('An error occurred'); } finally { setSubmitting(false); }
   };
 
   const handleDelete = async (commentId) => {
-    setSubmitting(true);
-    setSubmitError(null);
+    setSubmitting(true); setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comment(commentId), {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setSubmitError(data.detail || 'Failed to delete comment');
-        return;
-      }
+      const res = await fetchWithAuth(API_ENDPOINTS.recipes.comment(commentId), { method: 'DELETE' });
+      if (!res.ok) { setSubmitError((await res.json()).detail || 'Failed to delete comment'); return; }
       fetchComments();
-    } catch {
-      setSubmitError('An error occurred');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setSubmitError('An error occurred'); } finally { setSubmitting(false); }
   };
 
   const countComments = (nodes) => {
@@ -345,7 +250,6 @@ export default function CommentThread({ postId }) {
 
   return (
     <div className="mt-2">
-      {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-foreground">
           Comments {commentCount > 0 && <span className="text-muted-foreground text-base font-normal">({commentCount})</span>}
@@ -360,76 +264,60 @@ export default function CommentThread({ postId }) {
         )}
       </div>
 
-      {/* Error banner */}
       {submitError && (
-        <div className="mb-3 p-2 bg-red-500/10 border border-red-500 text-red-500 rounded-md text-sm">
-          {submitError}
-        </div>
+        <div className="mb-3 p-2 bg-red-500/10 border border-red-500 text-red-500 rounded-md text-sm">{submitError}</div>
       )}
 
-      {/* Top-level comment editor */}
       {topLevelOpen && (
         <div className="mb-4 flex gap-2 items-start">
           <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-muted flex items-center justify-center mt-0.5">
-            {avatar ? (
-              <img src={avatar} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <User className="h-4 w-4 text-muted-foreground" />
-            )}
+            {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : <User className="h-4 w-4 text-muted-foreground" />}
           </div>
           <div className="flex-1">
-            <CommentEditor
-              submitting={submitting}
-              onSubmit={handleCreate}
-              onCancel={() => setTopLevelOpen(false)}
-            />
+            <CommentEditor submitting={submitting} onSubmit={handleCreate} onCancel={() => setTopLevelOpen(false)} />
           </div>
         </div>
       )}
 
-      {/* Comment list */}
       {loading ? (
         <p className="text-muted-foreground text-sm">Loading comments...</p>
       ) : (
         <>
-          {error && comments.length === 0 && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
+          {error && comments.length === 0 && <p className="text-red-500 text-sm">{error}</p>}
           {!error && comments.length === 0 && (
             <p className="text-muted-foreground text-sm">
               No comments yet.{isAuthenticated ? ' Be the first!' : ' Log in to comment.'}
             </p>
           )}
           {comments.length > 0 && (
-        <div className="space-y-1 divide-y divide-border">
-          {comments.map((comment) => (
-            <CommentNode
-              key={comment.id}
-              comment={comment}
-              depth={0}
-              postId={postId}
-              collapsed={collapsed}
-              toggleCollapse={toggleCollapse}
-              replyingTo={replyingTo}
-              setReplyingTo={setReplyingTo}
-              editingId={editingId}
-              setEditingId={setEditingId}
-              submitting={submitting}
-              handleReply={handleReply}
-              handleEdit={handleEdit}
-              handleDelete={handleDelete}
-              isAuthenticated={isAuthenticated}
-              username={username}
-              userRole={userRole}
-              onUsernameClick={openProfilePopup}
-            />
-          ))}
-        </div>
+            <div className="space-y-1 divide-y divide-border">
+              {comments.map((comment) => (
+                <CommentNode
+                  key={comment.id}
+                  comment={comment}
+                  depth={0}
+                  recipeId={recipeId}
+                  collapsed={collapsed}
+                  toggleCollapse={toggleCollapse}
+                  replyingTo={replyingTo}
+                  setReplyingTo={setReplyingTo}
+                  editingId={editingId}
+                  setEditingId={setEditingId}
+                  submitting={submitting}
+                  handleReply={handleReply}
+                  handleEdit={handleEdit}
+                  handleDelete={handleDelete}
+                  isAuthenticated={isAuthenticated}
+                  username={username}
+                  userRole={userRole}
+                  onUsernameClick={openProfilePopup}
+                />
+              ))}
+            </div>
           )}
         </>
       )}
 
-      {/* Login prompt for guests */}
       {!isAuthenticated && (
         <p className="mt-4 text-sm text-muted-foreground">
           <a href="/login" className="text-primary hover:underline">Log in</a> to join the conversation.

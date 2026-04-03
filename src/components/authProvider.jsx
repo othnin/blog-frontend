@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { fetchWithAuth } from '@/lib/tokenUtils';
 
 const AuthContext = createContext(null);
 
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
   // Fetch avatar when authenticated
   useEffect(() => {
     if (!isAuthenticated || loading) return;
-    fetch('/api/auth/me')
+    fetchWithAuth('/api/auth/me')
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setAvatar(data.profile?.avatar || null); })
       .catch(() => {});

@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronDown, PenSquare } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
+import { fetchWithAuth } from '@/lib/tokenUtils';
 
 export default function BlogDropdown() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -24,7 +25,7 @@ export default function BlogDropdown() {
       setUserRole(null);
       return;
     }
-    fetch(API_ENDPOINTS.auth.me)
+    fetchWithAuth(API_ENDPOINTS.auth.me)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => { if (data) setUserRole(data.profile?.role); })
       .catch(() => {});

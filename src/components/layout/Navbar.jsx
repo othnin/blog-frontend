@@ -49,8 +49,15 @@ export default function Navbar({className}) {
                     <BrandLink displayName={true} />
                     
                     <CategoryDropdown />
-                    
+
                     <BlogDropdown />
+
+                    <Link
+                        href="/recipes"
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        Recipes
+                    </Link>
                 </div>
                 
                 {/* Middle section: Search */}

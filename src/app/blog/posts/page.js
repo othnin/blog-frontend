@@ -100,7 +100,7 @@ export default function BlogPostsPage() {
     const fetchUserRole = async () => {
       if (!isAuthenticated) return;
       try {
-        const response = await fetch(API_ENDPOINTS.auth.me);
+        const response = await fetchWithAuth(API_ENDPOINTS.auth.me);
         if (response.ok) {
           const userData = await response.json();
           setUserRole(userData.profile?.role);

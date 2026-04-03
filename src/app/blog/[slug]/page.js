@@ -95,7 +95,7 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    fetch(API_ENDPOINTS.auth.me)
+    fetchWithAuth(API_ENDPOINTS.auth.me)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data) setUserRole(data.profile?.role); })
       .catch(() => {});
