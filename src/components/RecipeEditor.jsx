@@ -82,6 +82,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
       : [emptyInstruction()]
   );
   const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [commentsDisabled, setCommentsDisabled] = useState(initialData?.comments_disabled ?? false);
 
   const [dietaryLabels, setDietaryLabels] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -200,6 +201,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
           content: ins.content.trim(),
         })),
       notes: notes.trim(),
+      comments_disabled: commentsDisabled,
     };
     onSubmit(payload);
   };
@@ -534,6 +536,20 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
           rows={4}
           className={inputCls}
         />
+      </div>
+
+      {/* ── Disable Comments ────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="comments_disabled"
+          checked={commentsDisabled}
+          onChange={(e) => setCommentsDisabled(e.target.checked)}
+          className="w-4 h-4 rounded border-input accent-primary"
+        />
+        <label htmlFor="comments_disabled" className="text-sm font-medium text-foreground cursor-pointer">
+          Disable comments on this recipe
+        </label>
       </div>
 
       {/* ── Error & Submit ──────────────────────────────────────────────── */}

@@ -190,7 +190,7 @@ function CommentNode({
   );
 }
 
-export default function CommentThread({ postId }) {
+export default function CommentThread({ postId, commentsDisabled = false }) {
   const { isAuthenticated, username, avatar } = useAuth();
 
   const [comments, setComments] = useState([]);
@@ -342,6 +342,15 @@ export default function CommentThread({ postId }) {
   };
 
   const commentCount = countComments(comments);
+
+  if (commentsDisabled) {
+    return (
+      <div className="mt-2">
+        <h2 className="text-xl font-semibold text-foreground mb-3">Comments</h2>
+        <p className="text-sm text-muted-foreground italic">Comments are disabled on this post.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-2">

@@ -74,3 +74,9 @@
       @apply bg-background text-foreground;
     }
   }
+
+@media print {
+  body.print-compact header {
+    display: none !important;
+  }
+}

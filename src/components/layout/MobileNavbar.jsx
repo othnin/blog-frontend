@@ -42,8 +42,13 @@ export default function MobileNavbar({className}) {
       })}
         
         <Link href="/recipes" className="text-muted-foreground hover:text-foreground">
-          Recipes
+          All Recipes
         </Link>
+        {auth.isAuthenticated && (
+          <Link href="/dashboard/create-recipe" className="text-muted-foreground hover:text-foreground">
+            Add Recipe
+          </Link>
+        )}
 
         {auth.isAuthenticated ?
         <Link href="/logout" className="text-muted-foreground hover:text-foreground">

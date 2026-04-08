@@ -39,7 +39,8 @@ export default function EditPostPage() {
     }),
     category_id: null,
     tag_ids: [],
-    status: 'draft'
+    status: 'draft',
+    comments_disabled: false,
   });
 
   // Check authentication and authorization
@@ -101,7 +102,8 @@ export default function EditPostPage() {
             content_json: postData.content_json,
             category_id: postData.category?.id ?? null,
             tag_ids: postData.tags?.map(t => t.id) ?? [],
-            status: postData.status
+            status: postData.status,
+            comments_disabled: postData.comments_disabled ?? false,
           });
         }
       } catch (err) {
@@ -258,6 +260,20 @@ export default function EditPostPage() {
             <option value="scheduled">Scheduled</option>
             <option value="archived">Archived</option>
           </select>
+        </div>
+
+        {/* Disable Comments */}
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="comments_disabled"
+            checked={formData.comments_disabled}
+            onChange={(e) => setFormData((prev) => ({ ...prev, comments_disabled: e.target.checked }))}
+            className="w-4 h-4 rounded border-input accent-primary"
+          />
+          <label htmlFor="comments_disabled" className="text-sm font-medium text-foreground cursor-pointer">
+            Disable comments on this post
+          </label>
         </div>
 
         {/* Submit Button */}

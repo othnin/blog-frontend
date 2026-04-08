@@ -9,7 +9,7 @@ import { fetchWithAuth } from '@/lib/tokenUtils';
 import IngredientList from '@/components/IngredientList';
 import StarRating from '@/components/StarRating';
 import RecipeCommentThread from '@/components/RecipeCommentThread';
-import { Clock, ChefHat, Eye, User } from 'lucide-react';
+import { Clock, ChefHat, Eye, User, Printer } from 'lucide-react';
 
 const CUISINE_LABELS = {
   italian: 'Italian', mexican: 'Mexican', asian: 'Asian', american: 'American',
@@ -23,6 +23,10 @@ const COURSE_LABELS = {
   side: 'Side Dish', soup: 'Soup', salad: 'Salad',
 };
 
+function formatAmount(amount, scale) {
+  return parseFloat((parseFloat(amount) * scale).toFixed(3)).toString();
+}
+
 export default function RecipeDetailPage() {
   const { slug } = useParams();
   const { isAuthenticated, username } = useAuth();
@@ -35,6 +39,27 @@ export default function RecipeDetailPage() {
   const [userRole, setUserRole] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [deleting, setDeleting] = useState(false);
+
+  // Scale state lifted here so Print can read it
+  const [scale, setScale] = useState(1);
+
+  // Print state
+  const [printCompact, setPrintCompact] = useState(false);
+  const [pendingPrint, setPendingPrint] = useState(false);
+
+  useEffect(() => {
+    if (pendingPrint) {
+      if (printCompact) document.body.classList.add('print-compact');
+      window.print();
+      document.body.classList.remove('print-compact');
+      setPendingPrint(false);
+    }
+  }, [pendingPrint]);
+
+  const handlePrint = (compact) => {
+    setPrintCompact(compact);
+    setPendingPrint(true);
+  };
 
   useEffect(() => {
     fetch(API_ENDPOINTS.recipes.detail(slug))
@@ -89,16 +114,22 @@ export default function RecipeDetailPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-muted-foreground">
+
+      {/* Print-only: page URL */}
+      <div className="hidden print:block text-xs text-muted-foreground mb-4">
+        {typeof window !== 'undefined' && window.location.href}
+      </div>
+
+      {/* Breadcrumb — hidden when printing */}
+      <div className="mb-4 text-sm text-muted-foreground print:hidden">
         <Link href="/recipes" className="hover:text-foreground">Recipes</Link>
         <span className="mx-2">/</span>
         <span className="text-foreground">{recipe.title}</span>
       </div>
 
-      {/* Hero image */}
+      {/* Hero image — hidden in compact print */}
       {recipe.images?.length > 0 && (
-        <div className="mb-6">
+        <div className={`mb-6 ${printCompact ? 'print:hidden' : ''}`}>
           <div className="rounded-xl overflow-hidden bg-muted aspect-video mb-2">
             <img
               src={recipe.images[selectedImage]}
@@ -106,8 +137,9 @@ export default function RecipeDetailPage() {
               className="w-full h-full object-cover"
             />
           </div>
+          {/* Thumbnail gallery — always hidden when printing */}
           {recipe.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 print:hidden">
               {recipe.images.map((url, i) => (
                 <button
                   key={url + i}
@@ -138,7 +170,7 @@ export default function RecipeDetailPage() {
           </span>
           <span>{new Date(recipe.created_at).toLocaleDateString()}</span>
           {recipe.view_count != null && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 print:hidden">
               <Eye className="w-3.5 h-3.5" /> {recipe.view_count} views
             </span>
           )}
@@ -171,11 +203,20 @@ export default function RecipeDetailPage() {
                 <p className="font-semibold text-foreground">{recipe.yield_amount} {recipe.yield_unit}</p>
               </div>
             )}
+            {/* Print-only scaled yield — shown only when scale is not 1 */}
+            {recipe.yield_amount && scale !== 1 && (
+              <div className="hidden print:block text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Yield (×{scale})</p>
+                <p className="font-semibold text-foreground">
+                  {formatAmount(recipe.yield_amount, scale)} {recipe.yield_unit}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        {/* Badges — hidden when printing */}
+        <div className="flex flex-wrap gap-2 mb-3 print:hidden">
           {recipe.cuisine_type && (
             <span className="text-xs px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
               {CUISINE_LABELS[recipe.cuisine_type] || recipe.cuisine_type}
@@ -198,24 +239,40 @@ export default function RecipeDetailPage() {
           ))}
         </div>
 
-        {/* Edit / Delete */}
-        {canEdit && (
-          <div className="flex gap-2">
-            <Link
-              href={`/dashboard/edit-recipe/${recipe.id}`}
-              className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
-            >
-              Edit
-            </Link>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-3 py-1.5 text-sm bg-red-500/10 text-red-600 rounded-md hover:bg-red-500/20 disabled:opacity-50"
-            >
-              {deleting ? 'Deleting…' : 'Delete'}
-            </button>
-          </div>
-        )}
+        {/* Edit / Delete / Print — hidden when printing */}
+        <div className="flex gap-2 print:hidden">
+          {canEdit && (
+            <>
+              <Link
+                href={`/dashboard/edit-recipe/${recipe.id}`}
+                className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
+              >
+                Edit
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-3 py-1.5 text-sm bg-red-500/10 text-red-600 rounded-md hover:bg-red-500/20 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => handlePrint(false)}
+            className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 flex items-center gap-1.5"
+          >
+            <Printer className="h-4 w-4" />
+            Print
+          </button>
+          <button
+            onClick={() => handlePrint(true)}
+            className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 flex items-center gap-1.5"
+          >
+            <Printer className="h-4 w-4" />
+            Print Compact
+          </button>
+        </div>
       </div>
 
       {/* Description */}
@@ -228,7 +285,11 @@ export default function RecipeDetailPage() {
         {recipe.ingredients?.length > 0 && (
           <div className="md:col-span-1">
             <h2 className="text-xl font-semibold text-foreground mb-4">Ingredients</h2>
-            <IngredientList ingredients={recipe.ingredients} />
+            <IngredientList
+              ingredients={recipe.ingredients}
+              scale={scale}
+              onScaleChange={setScale}
+            />
           </div>
         )}
 
@@ -253,16 +314,16 @@ export default function RecipeDetailPage() {
         )}
       </div>
 
-      {/* Notes */}
+      {/* Notes — hidden in compact print */}
       {recipe.notes && (
-        <div className="mb-10 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+        <div className={`mb-10 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg ${printCompact ? 'print:hidden' : ''}`}>
           <h2 className="text-base font-semibold text-foreground mb-2">Notes</h2>
           <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{recipe.notes}</p>
         </div>
       )}
 
-      {/* Star Rating */}
-      <div className="mb-10 pb-8 border-b border-border">
+      {/* Star Rating — hidden when printing */}
+      <div className="mb-10 pb-8 border-b border-border print:hidden">
         <h2 className="text-xl font-semibold text-foreground mb-3">Rate this recipe</h2>
         <StarRating
           recipeId={recipe.id}
@@ -272,8 +333,10 @@ export default function RecipeDetailPage() {
         />
       </div>
 
-      {/* Comments */}
-      <RecipeCommentThread recipeId={recipe.id} />
+      {/* Comments — hidden when printing */}
+      <div className="print:hidden">
+        <RecipeCommentThread recipeId={recipe.id} commentsDisabled={recipe.comments_disabled} />
+      </div>
     </div>
   );
 }

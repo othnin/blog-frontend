@@ -433,7 +433,7 @@ export default function BlogDetailPage() {
       {/* ── COMMENTS ── only for published posts */}
       {!editMode && post && post.status === 'published' && (
         <section className="mt-8">
-          <CommentThread postId={post.id} />
+          <CommentThread postId={post.id} commentsDisabled={post.comments_disabled} />
         </section>
       )}
 

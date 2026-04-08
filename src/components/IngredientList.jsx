@@ -15,15 +15,17 @@ function formatAmount(amount, scale) {
   return parseFloat(result.toFixed(3)).toString();
 }
 
-export default function IngredientList({ ingredients }) {
-  const [scale, setScale] = useState(1);
+export default function IngredientList({ ingredients, scale: scaleProp, onScaleChange }) {
+  const [localScale, setLocalScale] = useState(1);
+  const scale = scaleProp !== undefined ? scaleProp : localScale;
+  const setScale = onScaleChange || setLocalScale;
 
   if (!ingredients || ingredients.length === 0) return null;
 
   return (
     <div>
-      {/* Scale buttons */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Scale buttons — hidden when printing */}
+      <div className="flex items-center gap-2 mb-4 print:hidden">
         <span className="text-sm text-muted-foreground">Scale:</span>
         {SCALE_OPTIONS.map((opt) => (
           <button

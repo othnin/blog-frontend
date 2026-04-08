@@ -9,6 +9,7 @@ import MobileNavbar from "./MobileNavbar"
 import AccountDropdown from "./AccountDropdown"
 import CategoryDropdown from "./CategoryDropdown"
 import BlogDropdown from "./BlogDropdown"
+import RecipeDropdown from "./RecipeDropdown"
 import { Search, CircleUser } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,12 +53,7 @@ export default function Navbar({className}) {
 
                     <BlogDropdown />
 
-                    <Link
-                        href="/recipes"
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        Recipes
-                    </Link>
+                    <RecipeDropdown />
                 </div>
                 
                 {/* Middle section: Search */}
