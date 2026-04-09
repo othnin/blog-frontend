@@ -47,7 +47,14 @@ export function AuthProvider({ children }) {
     if (!isAuthenticated || loading) return;
     fetchWithAuth('/api/auth/me')
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setAvatar(data.profile?.avatar || null); })
+      .then((data) => {
+        if (data) {
+          const raw = data.profile?.avatar || null;
+          // Strip the backend origin so the URL routes through the Next.js /media/* proxy
+          const normalized = raw ? raw.replace(/^https?:\/\/[^/]+/, '') : null;
+          setAvatar(normalized);
+        }
+      })
       .catch(() => {});
   }, [isAuthenticated, loading]);
 

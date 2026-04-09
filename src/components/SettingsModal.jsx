@@ -106,7 +106,9 @@ export default function SettingsModal({ open, onClose }) {
         setAvatarPreview(null);
       } else {
         const data = await res.json();
-        setAvatar(data.avatar_url);
+        // Strip the backend origin so the URL routes through the Next.js /media/* proxy
+        const normalized = data.avatar_url ? data.avatar_url.replace(/^https?:\/\/[^/]+/, '') : null;
+        setAvatar(normalized);
       }
     } catch {
       setAvatarError('Upload failed.');
