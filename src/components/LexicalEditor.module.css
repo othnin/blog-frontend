@@ -340,12 +340,52 @@
   background: rgba(220, 38, 38, 0.9);
 }
 
+/* ─── Resize handles (shared by image and YouTube) ───────────────── */
+.mediaActive {
+  outline: 2px solid #2563eb;
+  border-radius: 4px;
+}
+
+.resizeHandle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #2563eb;
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Left-center: drag left to grow, drag right to shrink */
+.resizeHandleW {
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+/* Right-center: drag right to grow, drag left to shrink */
+.resizeHandleE {
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
 /* ─── YouTube embed ──────────────────────────────────────────────── */
+/* Outer wrapper handles resize state and margin */
+.youtubeResizeWrapper {
+  position: relative;
+  margin: 12px 0;
+  max-width: 100%;
+}
+
+/* Inner wrapper maintains the 16:9 aspect ratio */
 .youtubeWrapper {
   position: relative;
   width: 100%;
   padding-top: 56.25%; /* 16:9 */
-  margin: 12px 0;
   border-radius: 6px;
   overflow: hidden;
   background: #000;

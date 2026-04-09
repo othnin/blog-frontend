@@ -165,6 +165,7 @@ export default function LexicalRenderer({ jsonContent }) {
             alt={node.altText || ''}
             className={styles.rendererImage}
             loading="lazy"
+            style={node.width ? { width: `${node.width}px`, height: 'auto', maxWidth: '100%' } : {}}
           />
         );
 
@@ -173,7 +174,11 @@ export default function LexicalRenderer({ jsonContent }) {
 
       case 'youtube':
         return (
-          <div key={index} className={styles.youtubeWrapper}>
+          <div
+            key={index}
+            className={styles.youtubeWrapper}
+            style={node.width ? { width: `${node.width}px`, maxWidth: '100%' } : {}}
+          >
             <iframe
               src={`https://www.youtube.com/embed/${node.videoId}`}
               title="YouTube video"

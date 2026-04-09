@@ -69,8 +69,29 @@ import styles from './LexicalEditor.module.css';
 
 export const INSERT_IMAGE_COMMAND = createCommand('INSERT_IMAGE_COMMAND');
 
-function ImageComponent({ src, altText, nodeKey, editor }) {
+function ImageComponent({ src, altText, nodeKey, editor, width }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [localWidth, setLocalWidth] = useState(width ?? null);
+  const imgRef = useRef(null);
+  const latestWidthRef = useRef(localWidth);
+
+  // Sync when undo/redo changes the node's width externally
+  useEffect(() => {
+    setLocalWidth(width ?? null);
+    latestWidthRef.current = width ?? null;
+  }, [width]);
+
+  // Block text selection and set cursor globally while dragging
+  useEffect(() => {
+    if (!isResizing) return;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing]);
 
   const handleDelete = (e) => {
     e.stopPropagation();
@@ -80,23 +101,74 @@ function ImageComponent({ src, altText, nodeKey, editor }) {
     });
   };
 
+  // direction: 'e' = right handle (drag right → wider), 'w' = left handle (drag left → wider)
+  const startResize = (direction) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = imgRef.current?.offsetWidth ?? 300;
+
+    const onMouseMove = (moveEvent) => {
+      const delta = direction === 'w'
+        ? startX - moveEvent.clientX
+        : moveEvent.clientX - startX;
+      const newWidth = Math.max(100, Math.round(startWidth + delta));
+      latestWidthRef.current = newWidth;
+      setLocalWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      setIsResizing(false);
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if (node) node.setWidth(latestWidthRef.current);
+      });
+    };
+
+    setIsResizing(true);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const isActive = isHovered || isResizing;
+  const imgStyle = localWidth ? { width: `${localWidth}px`, height: 'auto' } : {};
+
   return (
     <div
-      className={styles.imageWrapper}
+      className={`${styles.imageWrapper}${isActive ? ` ${styles.mediaActive}` : ''}`}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => { if (!isResizing) setIsHovered(false); }}
     >
-      <img src={src} alt={altText} className={styles.editorImage} />
-      {isHovered && (
-        <button
-          type="button"
-          className={styles.imageDeleteBtn}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={handleDelete}
-          title="Remove image"
-        >
-          ✕
-        </button>
+      <img
+        ref={imgRef}
+        src={src}
+        alt={altText}
+        className={styles.editorImage}
+        style={imgStyle}
+        draggable={false}
+      />
+      {isActive && (
+        <>
+          <div
+            className={`${styles.resizeHandle} ${styles.resizeHandleW}`}
+            onMouseDown={startResize('w')}
+          />
+          <div
+            className={`${styles.resizeHandle} ${styles.resizeHandleE}`}
+            onMouseDown={startResize('e')}
+          />
+          <button
+            type="button"
+            className={styles.imageDeleteBtn}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleDelete}
+            title="Remove image"
+          >
+            ✕
+          </button>
+        </>
       )}
     </div>
   );
@@ -104,17 +176,23 @@ function ImageComponent({ src, altText, nodeKey, editor }) {
 
 class ImageNode extends DecoratorNode {
   static getType() { return 'image'; }
-  static clone(node) { return new ImageNode(node.__src, node.__altText, node.__key); }
+  static clone(node) { return new ImageNode(node.__src, node.__altText, node.__width, node.__key); }
 
-  constructor(src, altText = '', key) {
+  constructor(src, altText = '', width = null, key) {
     super(key);
     this.__src = src;
     this.__altText = altText;
+    this.__width = width;
   }
 
-  static importJSON(s) { return new ImageNode(s.src, s.altText || ''); }
+  static importJSON(s) { return new ImageNode(s.src, s.altText || '', s.width ?? null); }
   exportJSON() {
-    return { type: 'image', version: 1, src: this.__src, altText: this.__altText };
+    return { type: 'image', version: 1, src: this.__src, altText: this.__altText, width: this.__width };
+  }
+
+  setWidth(width) {
+    const self = this.getWritable();
+    self.__width = width;
   }
 
   isInline() { return false; }
@@ -127,6 +205,7 @@ class ImageNode extends DecoratorNode {
         altText={this.__altText}
         nodeKey={this.__key}
         editor={editor}
+        width={this.__width}
       />
     );
   }
@@ -169,39 +248,126 @@ function extractYouTubeId(url) {
   return match ? match[1] : null;
 }
 
-class YouTubeNode extends DecoratorNode {
-  static getType() { return 'youtube'; }
-  static clone(node) { return new YouTubeNode(node.__videoId, node.__key); }
+function YouTubeComponent({ videoId, nodeKey, editor, width }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [localWidth, setLocalWidth] = useState(width ?? null);
+  const wrapperRef = useRef(null);
+  const latestWidthRef = useRef(localWidth);
 
-  constructor(videoId, key) {
-    super(key);
-    this.__videoId = videoId;
-  }
+  useEffect(() => {
+    setLocalWidth(width ?? null);
+    latestWidthRef.current = width ?? null;
+  }, [width]);
 
-  static importJSON(s) { return new YouTubeNode(s.videoId); }
-  exportJSON() {
-    return { type: 'youtube', version: 1, videoId: this.__videoId };
-  }
+  useEffect(() => {
+    if (!isResizing) return;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ew-resize';
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing]);
 
-  isInline() { return false; }
-  createDOM() {
-    const div = document.createElement('div');
-    div.className = styles.youtubeWrapper;
-    return div;
-  }
-  updateDOM() { return false; }
+  const startResize = (direction) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = wrapperRef.current?.offsetWidth ?? 400;
 
-  decorate() {
-    return (
+    const onMouseMove = (moveEvent) => {
+      const delta = direction === 'w'
+        ? startX - moveEvent.clientX
+        : moveEvent.clientX - startX;
+      const newWidth = Math.max(200, Math.round(startWidth + delta));
+      latestWidthRef.current = newWidth;
+      setLocalWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      setIsResizing(false);
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if (node) node.setWidth(latestWidthRef.current);
+      });
+    };
+
+    setIsResizing(true);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const isActive = isHovered || isResizing;
+  const outerStyle = localWidth ? { width: `${localWidth}px`, maxWidth: '100%' } : {};
+
+  return (
+    <div
+      ref={wrapperRef}
+      className={`${styles.youtubeResizeWrapper}${isActive ? ` ${styles.mediaActive}` : ''}`}
+      style={outerStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => { if (!isResizing) setIsHovered(false); }}
+    >
       <div className={styles.youtubeWrapper}>
         <iframe
-          src={`https://www.youtube.com/embed/${this.__videoId}`}
+          src={`https://www.youtube.com/embed/${videoId}`}
           title="YouTube video"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className={styles.youtubeIframe}
         />
       </div>
+      {isActive && (
+        <>
+          <div
+            className={`${styles.resizeHandle} ${styles.resizeHandleW}`}
+            onMouseDown={startResize('w')}
+          />
+          <div
+            className={`${styles.resizeHandle} ${styles.resizeHandleE}`}
+            onMouseDown={startResize('e')}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+class YouTubeNode extends DecoratorNode {
+  static getType() { return 'youtube'; }
+  static clone(node) { return new YouTubeNode(node.__videoId, node.__width, node.__key); }
+
+  constructor(videoId, width = null, key) {
+    super(key);
+    this.__videoId = videoId;
+    this.__width = width;
+  }
+
+  static importJSON(s) { return new YouTubeNode(s.videoId, s.width ?? null); }
+  exportJSON() {
+    return { type: 'youtube', version: 1, videoId: this.__videoId, width: this.__width };
+  }
+
+  setWidth(width) {
+    const self = this.getWritable();
+    self.__width = width;
+  }
+
+  isInline() { return false; }
+  createDOM() { return document.createElement('div'); }
+  updateDOM() { return false; }
+
+  decorate(editor) {
+    return (
+      <YouTubeComponent
+        videoId={this.__videoId}
+        nodeKey={this.__key}
+        editor={editor}
+        width={this.__width}
+      />
     );
   }
 }
