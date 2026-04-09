@@ -234,7 +234,7 @@ describe('FE-011: CommentThread Component', () => {
       </>
     );
     render(<TestComponent />);
-    expect(screen.getByText(/jan/i)).toBeInTheDocument();
+    expect(screen.getByText(/\d{1,2}\/\d{1,2}\/\d{4}/)).toBeInTheDocument();
   });
 
   it('allows deleting own comment', async () => {
@@ -929,7 +929,7 @@ describe('FE-019: CategorySelector Component', () => {
 
   it('displays selected categories', () => {
     const TestComponent = () => {
-      const [selected, setSelected] = React.useState([1]);
+      const [selected, setSelected] = React.useState(['1']);
       return (
         <>
           <select

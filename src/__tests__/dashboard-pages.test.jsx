@@ -83,7 +83,7 @@ const mockPush = jest.fn();
 const mockReplace = jest.fn();
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  jest.resetAllMocks();
   global.fetch = jest.fn();
   localStorage.clear();
   localStorage.setItem('access_token', 'test-token');
@@ -113,9 +113,10 @@ describe('DashboardPage', () => {
 
   it('renders Dashboard heading and user greeting when authenticated', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch
-      .mockResolvedValueOnce(ok(SAMPLE_POSTS))
-      .mockResolvedValueOnce(ok({ username: 'testuser', profile: { role: 'editor' } }));
+    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'testuser', profile: { role: 'editor' } }))
+      .mockResolvedValueOnce(ok([])); // recipes
     render(<DashboardPage />);
     await waitFor(() =>
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
@@ -139,9 +140,10 @@ describe('DashboardPage', () => {
 
   it('shows Create New Post button for editor role', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch
-      .mockResolvedValueOnce(ok(SAMPLE_POSTS))
-      .mockResolvedValueOnce(ok({ username: 'editor', profile: { role: 'editor' } }));
+    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'editor', profile: { role: 'editor' } }))
+      .mockResolvedValueOnce(ok([])); // recipes
     render(<DashboardPage />);
     await waitFor(() =>
       expect(screen.getByRole('link', { name: /create new post/i })).toBeInTheDocument()
@@ -177,7 +179,9 @@ describe('CreatePostPage', () => {
     fetchWithAuth.mockResolvedValueOnce(
       ok({ username: 'editor', profile: { role: 'editor' } })
     );
-    global.fetch.mockResolvedValueOnce(ok([])); // categories
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([])); // tags
     render(<CreatePostPage />);
     await waitFor(() =>
       expect(screen.getByText('Create New Blog Post')).toBeInTheDocument()
@@ -191,7 +195,9 @@ describe('CreatePostPage', () => {
     fetchWithAuth.mockResolvedValueOnce(
       ok({ username: 'admin', profile: { role: 'admin' } })
     );
-    global.fetch.mockResolvedValueOnce(ok([]));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([])); // tags
     render(<CreatePostPage />);
     await waitFor(() =>
       expect(screen.getByText('Create New Blog Post')).toBeInTheDocument()
@@ -203,7 +209,9 @@ describe('CreatePostPage', () => {
     fetchWithAuth.mockResolvedValueOnce(
       ok({ username: 'reader', profile: { role: 'reader' } })
     );
-    global.fetch.mockResolvedValueOnce(ok([]));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([])); // tags
     render(<CreatePostPage />);
     await waitFor(() =>
       expect(
@@ -217,7 +225,9 @@ describe('CreatePostPage', () => {
     fetchWithAuth.mockResolvedValueOnce(
       ok({ username: 'editor', profile: { role: 'editor' } })
     );
-    global.fetch.mockResolvedValueOnce(ok([]));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([])); // tags
     const user = userEvent.setup();
     render(<CreatePostPage />);
     await waitFor(() =>
@@ -235,8 +245,10 @@ describe('CreatePostPage', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
     fetchWithAuth
       .mockResolvedValueOnce(ok({ username: 'editor', profile: { role: 'editor' } }))
-      .mockResolvedValueOnce(ok({ slug: 'new-post-slug', id: 10 })); // POST create
-    global.fetch.mockResolvedValueOnce(ok([]));
+      .mockResolvedValueOnce(ok({ slug: 'new-post-slug', id: 10, status: 'published' })); // POST create
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([])); // tags
     const user = userEvent.setup();
     render(<CreatePostPage />);
     await waitFor(() =>
@@ -432,14 +444,14 @@ describe('EditPostPage', () => {
 
   it('shows error if user is not author', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    fetchWithAuth.mockRejectedValueOnce(new Error('403 Forbidden'));
-    
+    fetchWithAuth.mockResolvedValueOnce(fail({ detail: 'Forbidden' }, 403));
+
     const TestPage = () => {
       const [error, setError] = React.useState('');
       React.useEffect(() => {
-        fetchWithAuth(`/api/blog/posts/1/edit/`).catch(() =>
-          setError('You do not have permission to edit this post')
-        );
+        fetchWithAuth(`/api/blog/posts/1/edit/`)
+          .then((r) => { if (!r.ok) setError('You do not have permission to edit this post'); })
+          .catch(() => setError('You do not have permission to edit this post'));
       }, []);
       return error ? <div>{error}</div> : <div>Loading...</div>;
     };
@@ -452,17 +464,17 @@ describe('EditPostPage', () => {
   it('shows inline edit for draft status', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
     fetchWithAuth.mockResolvedValueOnce(ok({ ...SAMPLE_POST, status: 'draft' }));
-    
+
     const TestPage = () => (
       <div>
-        <select defaultValue="draft">
+        <select data-testid="status-select" defaultValue="draft">
           <option value="draft">Draft</option>
           <option value="published">Published</option>
         </select>
       </div>
     );
     render(<TestPage />);
-    expect(screen.getByDisplayValue('draft')).toBeInTheDocument();
+    expect(screen.getByTestId('status-select')).toHaveValue('draft');
   });
 
   it('shows delete button', async () => {

@@ -31,6 +31,13 @@ jest.mock('@/components/LexicalRenderer', () => {
   return MockLexicalRenderer;
 });
 
+jest.mock('@/components/CommentThread', () => {
+  function MockCommentThread() {
+    return <div data-testid="comment-thread">Comments</div>;
+  }
+  return MockCommentThread;
+});
+
 const mockUseAuth = jest.fn();
 jest.mock('@/components/authProvider', () => ({
   useAuth: () => mockUseAuth(),
@@ -44,7 +51,7 @@ const SAMPLE_POSTS = [
     title: 'First Post',
     slug: 'first-post',
     author: { id: 1, username: 'author1', email: 'a@a.com' },
-    categories: [{ id: 1, name: 'Tech', slug: 'tech', created_at: '2026-01-01T00:00:00Z' }],
+    category: { id: 1, name: 'Tech', slug: 'tech' },
     status: 'published',
     view_count: 10,
     created_at: '2026-01-01T00:00:00Z',
@@ -85,7 +92,10 @@ describe('BlogPostsPage', () => {
   });
 
   it('renders post cards after successful fetch', async () => {
-    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))          // categories
+      .mockResolvedValueOnce(ok([]))          // tags
+      .mockResolvedValueOnce(ok(SAMPLE_POSTS)); // posts
     render(<BlogPostsPage />);
     await waitFor(() =>
       expect(screen.getByText('First Post')).toBeInTheDocument()
@@ -99,7 +109,10 @@ describe('BlogPostsPage', () => {
   });
 
   it('shows empty state when no posts returned', async () => {
-    global.fetch.mockResolvedValueOnce(ok([]));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([]))  // tags
+      .mockResolvedValueOnce(ok([])); // posts
     render(<BlogPostsPage />);
     await waitFor(() =>
       expect(screen.getByText(/no blog posts yet/i)).toBeInTheDocument()
@@ -107,7 +120,10 @@ describe('BlogPostsPage', () => {
   });
 
   it('shows error state when fetch fails', async () => {
-    global.fetch.mockResolvedValueOnce(fail());
+    global.fetch
+      .mockResolvedValueOnce(ok([]))  // categories
+      .mockResolvedValueOnce(ok([]))  // tags
+      .mockResolvedValueOnce(fail()); // posts
     render(<BlogPostsPage />);
     await waitFor(() =>
       expect(screen.getByText(/Error: Failed to fetch blog posts/i)).toBeInTheDocument()
@@ -117,8 +133,10 @@ describe('BlogPostsPage', () => {
   it('shows Create Post link for authenticated editor', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
     global.fetch
-      .mockResolvedValueOnce(ok(SAMPLE_POSTS))                              // posts
-      .mockResolvedValueOnce(ok({ profile: { role: 'editor' } }));          // me
+      .mockResolvedValueOnce(ok([]))                                         // categories
+      .mockResolvedValueOnce(ok([]))                                         // tags
+      .mockResolvedValueOnce(ok({ profile: { role: 'editor' } }))            // me (via fetchWithAuth, same effect)
+      .mockResolvedValueOnce(ok(SAMPLE_POSTS));                              // posts (separate effect)
     render(<BlogPostsPage />);
     await waitFor(() =>
       expect(screen.getByRole('link', { name: /create post/i })).toBeInTheDocument()
@@ -126,7 +144,10 @@ describe('BlogPostsPage', () => {
   });
 
   it('does not show Create Post link for unauthenticated visitors', async () => {
-    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
+    global.fetch
+      .mockResolvedValueOnce(ok([]))          // categories
+      .mockResolvedValueOnce(ok([]))          // tags
+      .mockResolvedValueOnce(ok(SAMPLE_POSTS)); // posts
     render(<BlogPostsPage />);
     await waitFor(() =>
       expect(screen.getByText('First Post')).toBeInTheDocument()
@@ -171,7 +192,7 @@ describe('BlogDetailPage', () => {
     global.fetch.mockResolvedValueOnce(fail());
     render(<BlogDetailPage />);
     await waitFor(() =>
-      expect(screen.getByText(/Error: Failed to fetch blog post/i)).toBeInTheDocument()
+      expect(screen.getByText(/Error: Post not found/i)).toBeInTheDocument()
     );
   });
 
