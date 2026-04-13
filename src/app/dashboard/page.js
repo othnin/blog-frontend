@@ -88,6 +88,14 @@ export default function DashboardPage() {
           >
             + New Recipe
           </Link>
+          {userRole === 'admin' && (
+            <Link
+              href="/admin"
+              className="inline-block px-6 py-3 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-medium"
+            >
+              Admin Panel
+            </Link>
+          )}
         </div>
       )}
 

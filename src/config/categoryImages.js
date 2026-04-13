@@ -4,17 +4,20 @@
  */
 export const CATEGORY_IMAGES = {
   'food-cooking': '/categories/food-cooking.webp',
-  'technology':   '/categories/technology.svg',
-  'science':      '/categories/science.svg',
-  'politics':     '/categories/politics.svg',
-  'philosophy':   '/categories/philosophy.svg',
+  'technology':   '/categories/techn1.png',
+  'science':      '/categories/science.jpg',
+  'politics':     '/categories/politics1.webp',
+  'philosophy':   '/categories/philosophy.jpg',
 };
 
 /**
- * Returns the image path for a given category slug, or null if not found.
+ * Returns the best image URL for a category.
+ * Prefers admin-uploaded image_url (served by Django), falls back to static map.
  * @param {string} slug
+ * @param {string|null} [imageUrl] - image_url from the API response
  * @returns {string|null}
  */
-export function getCategoryImage(slug) {
+export function getCategoryImage(slug, imageUrl) {
+  if (imageUrl) return imageUrl;
   return CATEGORY_IMAGES[slug] ?? null;
 }
