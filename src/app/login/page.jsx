@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
+import { API_ENDPOINTS } from '@/config/api';
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -11,6 +12,10 @@ export default function LoginPage() {
   const justRegistered = searchParams.get('registered') === 'true';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showUnverified, setShowUnverified] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -58,6 +63,13 @@ export default function LoginPage() {
           errorMessage = data.message;
         }
 
+        if (errorMessage.includes('Email not verified')) {
+          setShowUnverified(true);
+          // Pre-fill email if the username field looks like an email
+          if (formData.username.includes('@')) {
+            setResendEmail(formData.username);
+          }
+        }
         setError(errorMessage);
         setLoading(false);
       }
@@ -66,6 +78,26 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  async function handleResend(e) {
+    e.preventDefault();
+    if (!resendEmail.trim()) return;
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      const res = await fetch(API_ENDPOINTS.auth.resendVerification, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resendEmail.trim() }),
+      });
+      const data = await res.json();
+      setResendMessage(data.message || 'Verification email sent.');
+    } catch {
+      setResendMessage('Something went wrong. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
+  }
 
   return (
     <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
@@ -80,6 +112,35 @@ export default function LoginPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
           {error}
+        </div>
+      )}
+
+      {showUnverified && !resendMessage && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded text-sm">
+          <p className="font-medium text-amber-800 mb-2">Didn&apos;t receive a verification email?</p>
+          <form onSubmit={handleResend} className="flex gap-2">
+            <input
+              type="email"
+              required
+              placeholder="Your email address"
+              value={resendEmail}
+              onChange={(e) => setResendEmail(e.target.value)}
+              className="flex-1 px-3 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+            <button
+              type="submit"
+              disabled={resendLoading}
+              className="px-3 py-1.5 bg-amber-600 text-white rounded text-sm hover:bg-amber-700 disabled:opacity-50 whitespace-nowrap"
+            >
+              {resendLoading ? 'Sending…' : 'Resend'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {resendMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded text-sm">
+          {resendMessage}
         </div>
       )}
 
