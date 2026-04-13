@@ -13,6 +13,7 @@ import TagSelector from '@/components/TagSelector';
 import { useAuth } from '@/components/authProvider';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import CommentThread from '@/components/CommentThread';
+import { getCategoryImage } from '@/config/categoryImages';
 import UserProfilePopup from '@/components/UserProfilePopup';
 
 const STATUS_OPTIONS = ['draft', 'published', 'scheduled', 'archived'];
@@ -368,56 +369,71 @@ export default function BlogDetailPage() {
       {/* ── VIEW MODE ── */}
       {!editMode && (
         <article className="bg-card rounded-lg p-6 md:p-8">
-          <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
+          <div className="flex gap-6 items-start">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
 
-          <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">
-            <button
-              className="flex items-center gap-2 hover:text-foreground transition-colors"
-              onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
-            >
-              {post.author.avatar_url ? (
-                <img src={post.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
-              ) : (
-                <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                  {post.author.username?.[0]?.toUpperCase()}
-                </span>
-              )}
-              <span className="hover:underline">By {post.author.username}</span>
-            </button>
-            <span>•</span>
-            <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
-            <span>•</span>
-            <button
-              onClick={handleLike}
-              disabled={hasLiked}
-              className={`flex items-center gap-1 transition-colors ${hasLiked ? 'text-red-500 cursor-default' : 'hover:text-red-500'}`}
-            >
-              <Heart className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
-              {likeCount}
-            </button>
-          </div>
-
-          {post.category && (
-            <div className="mb-3">
-              <span className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded">
-                {post.category.name}
-              </span>
-            </div>
-          )}
-
-          {post.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {post.tags.map((tag) => (
-                <Link
-                  key={tag.id}
-                  href={`/blog/tags/${tag.slug}`}
-                  className="text-xs px-2 py-1 rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+              <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">
+                <button
+                  className="flex items-center gap-2 hover:text-foreground transition-colors"
+                  onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
                 >
-                  #{tag.name}
-                </Link>
-              ))}
+                  {post.author.avatar_url ? (
+                    <img src={post.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                      {post.author.username?.[0]?.toUpperCase()}
+                    </span>
+                  )}
+                  <span className="hover:underline">By {post.author.username}</span>
+                </button>
+                <span>•</span>
+                <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
+                <span>•</span>
+                <button
+                  onClick={handleLike}
+                  disabled={hasLiked}
+                  className={`flex items-center gap-1 transition-colors ${hasLiked ? 'text-red-500 cursor-default' : 'hover:text-red-500'}`}
+                >
+                  <Heart className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
+                  {likeCount}
+                </button>
+              </div>
+
+              {post.category && (
+                <div className="mb-3">
+                  <span className="text-sm bg-secondary text-secondary-foreground px-3 py-1 rounded">
+                    {post.category.name}
+                  </span>
+                </div>
+              )}
+
+              {post.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {post.tags.map((tag) => (
+                    <Link
+                      key={tag.id}
+                      href={`/blog/tags/${tag.slug}`}
+                      className="text-xs px-2 py-1 rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      #{tag.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            {post.category && getCategoryImage(post.category.slug) && (
+              <div className="flex-shrink-0 text-center hidden sm:block">
+                <img
+                  src={getCategoryImage(post.category.slug)}
+                  alt={post.category.name}
+                  className="w-28 h-28 rounded-lg object-cover border border-border shadow-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-1">{post.category.name}</p>
+              </div>
+            )}
+          </div>
 
           <div className="prose prose-invert max-w-none mb-6">
             <LexicalRenderer jsonContent={post.content_json} />

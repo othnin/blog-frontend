@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { Heart } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { getCategoryImage } from '@/config/categoryImages';
 
 const STATUS_STYLES = {
   draft:     'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
@@ -358,7 +359,16 @@ export default function BlogPostsPage() {
               href={`/blog/${post.slug}`}
               className="block p-6 border rounded-lg bg-card hover:shadow-lg transition-shadow"
             >
-              <h2 className="text-xl font-bold mb-2 text-foreground">{post.title}</h2>
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="text-xl font-bold text-foreground flex-1 mr-3">{post.title}</h2>
+                {post.category && getCategoryImage(post.category.slug) && (
+                  <img
+                    src={getCategoryImage(post.category.slug)}
+                    alt={post.category.name}
+                    className="w-14 h-14 rounded object-cover flex-shrink-0 border border-border"
+                  />
+                )}
+              </div>
               <p className="text-sm text-muted-foreground mb-2">
                 By {post.author.username} • {new Date(post.created_at).toLocaleDateString()}
               </p>
