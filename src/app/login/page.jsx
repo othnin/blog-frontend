@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
 import { API_ENDPOINTS } from '@/config/api';
 
-export default function LoginPage() {
+function LoginContent() {
   const auth = useAuth();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get('registered') === 'true';
@@ -193,5 +193,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><p>Loading...</p></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
