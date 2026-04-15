@@ -4,7 +4,7 @@
  */
 export const CATEGORY_IMAGES = {
   'food-cooking': '/categories/food-cooking.webp',
-  'technology':   '/categories/techn1.png',
+  'technology':   '/categories/tech1.png',
   'science':      '/categories/science.jpg',
   'politics':     '/categories/politics1.webp',
   'philosophy':   '/categories/philosophy.jpg',
