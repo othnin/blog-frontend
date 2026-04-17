@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   const { slug } = await params;
-  const token = getToken();
+  const token = await getToken();
 
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {

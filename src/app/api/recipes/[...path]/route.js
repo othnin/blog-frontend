@@ -9,7 +9,7 @@ async function proxy(request, { params }) {
   const url = new URL(`${DJANGO_BASE_URL}/api/recipes/${path.join('/')}/`);
   searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
-  const token = getToken();
+  const token = await getToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 

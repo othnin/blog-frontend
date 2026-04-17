@@ -46,7 +46,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   const { slug } = await params;
-  const token = getToken();
+  const token = await getToken();
 
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
@@ -81,7 +81,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { slug } = await params;
-  const token = getToken();
+  const token = await getToken();
 
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {

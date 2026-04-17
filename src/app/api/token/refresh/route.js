@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 const BACKEND_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function POST() {
-    const refreshToken = getRefreshToken();
+    const refreshToken = await getRefreshToken();
 
     if (!refreshToken) {
         return NextResponse.json({ detail: 'No refresh token' }, { status: 401 });
@@ -23,14 +23,14 @@ export async function POST() {
 
     if (!backendResponse.ok) {
         // Refresh token is invalid or expired — clear cookies so the client is in a clean state
-        deleteTokens();
+        await deleteTokens();
         return NextResponse.json({ detail: 'Token refresh failed' }, { status: 401 });
     }
 
     const data = await backendResponse.json();
-    setToken(data.access);
+    await setToken(data.access);
     if (data.refresh) {
-        setRefreshToken(data.refresh);
+        await setRefreshToken(data.refresh);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

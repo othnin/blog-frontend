@@ -19,8 +19,8 @@ export async function POST(request) {
     if (response.ok) {
         console.log("logged in")
         const {username, access, refresh} = responseData
-        setToken(access)
-        setRefreshToken(refresh)
+        await setToken(access)
+        await setRefreshToken(refresh)
         return NextResponse.json({"loggedIn": true, "username": username}, {status: 200})
     }
     return NextResponse.json({"loggedIn": false, ...responseData}, {status: response.status})

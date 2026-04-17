@@ -3,7 +3,7 @@ import { getToken } from '@/lib/auth';
 const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function GET() {
-  const token = getToken();
+  const token = await getToken();
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
       status: 401,
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function PATCH(request) {
-  const token = getToken();
+  const token = await getToken();
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
       status: 401,

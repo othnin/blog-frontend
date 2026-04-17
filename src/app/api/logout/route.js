@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const BACKEND_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function POST() {
-    const refreshToken = getRefreshToken();
+    const refreshToken = await getRefreshToken();
 
     if (refreshToken) {
         try {
@@ -18,6 +18,6 @@ export async function POST() {
         }
     }
 
-    deleteTokens();
+    await deleteTokens();
     return NextResponse.json({}, { status: 200 });
 }

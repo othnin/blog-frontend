@@ -4,7 +4,7 @@ const DJANGO_BASE_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function PUT(request, { params }) {
   const { commentId } = await params;
-  const token = getToken();
+  const token = await getToken();
 
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
@@ -38,7 +38,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { commentId } = await params;
-  const token = getToken();
+  const token = await getToken();
 
   if (!token) {
     return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
