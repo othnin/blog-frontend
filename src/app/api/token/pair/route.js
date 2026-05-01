@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_DJANGO_BASE_URL || process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
 export async function POST(request) {
   const targetUrl = `${BACKEND_URL}/api/token/pair`;
