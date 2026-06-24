@@ -222,23 +222,23 @@ function LoginContent() {
           Forgot password?
         </Link>
       </p>
-    </div>
 
-    <Script
-      src="https://accounts.google.com/gsi/client"
-      onLoad={() => {
-        if (window.google && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-          window.google.accounts.id.initialize({
-            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-            callback: handleGoogleCredential,
-          });
-          window.google.accounts.id.renderButton(
-            document.getElementById('google-signin-btn'),
-            { theme: 'outline', size: 'large', width: '100%' }
-          );
-        }
-      }}
-    />
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        onLoad={() => {
+          if (window.google && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+            window.google.accounts.id.initialize({
+              client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+              callback: handleGoogleCredential,
+            });
+            window.google.accounts.id.renderButton(
+              document.getElementById('google-signin-btn'),
+              { theme: 'outline', size: 'large', width: '100%' }
+            );
+          }
+        }}
+      />
+    </div>
   );
 }
 
