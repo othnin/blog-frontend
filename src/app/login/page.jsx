@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import Script from 'next/script';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/authProvider';
@@ -76,6 +77,25 @@ function LoginContent() {
     } catch (err) {
       setError('An error occurred. Please try again.');
       setLoading(false);
+    }
+  };
+
+  const handleGoogleCredential = async (response) => {
+    setError('');
+    try {
+      const res = await fetch('/api/auth/google-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await res.json();
+      if (data.loggedIn) {
+        auth.login(data.username);
+      } else {
+        setError(data.message || 'Google login failed. Please try again.');
+      }
+    } catch {
+      setError('Google login failed. Please try again.');
     }
   };
 
@@ -180,6 +200,16 @@ function LoginContent() {
         </button>
       </form>
 
+      {/* Google Sign-In button */}
+      <div className="mt-4">
+        <div className="relative flex items-center justify-center my-4">
+          <div className="border-t border-gray-300 dark:border-gray-600 w-full" />
+          <span className="px-3 text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">or</span>
+          <div className="border-t border-gray-300 dark:border-gray-600 w-full" />
+        </div>
+        <div id="google-signin-btn" className="flex justify-center" />
+      </div>
+
       <p className="mt-4 text-center text-sm">
         Don&apos;t have an account?{' '}
         <Link href="/register" className="text-blue-600 hover:underline">
@@ -193,6 +223,22 @@ function LoginContent() {
         </Link>
       </p>
     </div>
+
+    <Script
+      src="https://accounts.google.com/gsi/client"
+      onLoad={() => {
+        if (window.google && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+          window.google.accounts.id.initialize({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredential,
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById('google-signin-btn'),
+            { theme: 'outline', size: 'large', width: '100%' }
+          );
+        }
+      }}
+    />
   );
 }
 
