@@ -105,7 +105,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
     setImageError(null);
     try {
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('file', file);
       const res = await fetchWithAuth(API_ENDPOINTS.blog.uploadImage, { method: 'POST', body: fd });
       if (!res.ok) { setImageError('Upload failed'); return; }
       const data = await res.json();
