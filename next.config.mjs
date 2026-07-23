@@ -7,18 +7,20 @@
   const djangoBaseUrl = process.env.NEXT_PUBLIC_DJANGO_BASE_URL || process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
 
   const nextConfig = {
-    ...(allowedOrigins.length > 0 && { allowedDevOrigins: allowedOrigins }),
+    allowedDevOrigins: ['127.0.0.1', 'localhost', ...allowedOrigins],
 
     rewrites: async () => {
       return {
+        beforeFiles: [
+          {
+            source: '/media/:path*',
+            destination: `${djangoBaseUrl}/media/:path*`,
+          },
+        ],
         fallback: [
           {
             source: '/api/:path*',
             destination: `${djangoBaseUrl}/api/:path*`,
-          },
-          {
-            source: '/media/:path*',
-            destination: `${djangoBaseUrl}/media/:path*`,
           },
         ],
       };
@@ -38,3 +40,5 @@
       ];
     },
   };
+
+export default nextConfig;
