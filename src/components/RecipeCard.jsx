@@ -55,8 +55,8 @@ export default function RecipeCard({ recipe }) {
           By {recipe.author?.username} • {new Date(recipe.created_at).toLocaleDateString()}
         </p>
 
-        {recipe.description && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{recipe.description}</p>
+        {recipe.description_text && (
+          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{recipe.description_text}</p>
         )}
 
         {/* Timing */}

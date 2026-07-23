@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import TagSelector from '@/components/TagSelector';
+import LexicalEditor from '@/components/LexicalEditor';
 import { GripVertical, Trash2, Plus, ArrowUp, ArrowDown, X } from 'lucide-react';
 
 const CUISINE_OPTIONS = [
@@ -240,13 +241,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
 
         <div>
           <label className={labelCls}>Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of the recipe…"
-            rows={3}
-            className={inputCls}
-          />
+          <LexicalEditor initialValue={description} onChange={setDescription} />
         </div>
       </div>
 
@@ -497,13 +492,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
                   placeholder="Step title (optional)"
                   className={inputCls}
                 />
-                <textarea
-                  value={ins.content}
-                  onChange={(e) => updateInstruction(idx, 'content', e.target.value)}
-                  placeholder="Describe this step…"
-                  rows={2}
-                  className={inputCls}
-                />
+                <LexicalEditor initialValue={ins.content} onChange={(json) => updateInstruction(idx, 'content', json)} />
               </div>
               <button
                 type="button"
@@ -529,13 +518,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
       {/* ── Notes ──────────────────────────────────────────────────────── */}
       <div className={sectionCls}>
         <h2 className="text-base font-semibold text-foreground">Notes</h2>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Extra tips, substitutions, storage instructions…"
-          rows={4}
-          className={inputCls}
-        />
+        <LexicalEditor initialValue={notes} onChange={setNotes} />
       </div>
 
       {/* ── Disable Comments ────────────────────────────────────────────── */}

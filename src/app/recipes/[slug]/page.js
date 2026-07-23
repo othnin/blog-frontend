@@ -9,6 +9,7 @@ import { fetchWithAuth } from '@/lib/tokenUtils';
 import IngredientList from '@/components/IngredientList';
 import StarRating from '@/components/StarRating';
 import RecipeCommentThread from '@/components/RecipeCommentThread';
+import LexicalRenderer from '@/components/LexicalRenderer';
 import { Clock, ChefHat, Eye, User, Printer } from 'lucide-react';
 
 const CUISINE_LABELS = {
@@ -277,7 +278,9 @@ export default function RecipeDetailPage() {
 
       {/* Description */}
       {recipe.description && (
-        <p className="text-base text-foreground/90 leading-relaxed mb-8">{recipe.description}</p>
+        <div className="text-base text-foreground/90 leading-relaxed mb-8">
+          <LexicalRenderer jsonContent={recipe.description} />
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
@@ -305,7 +308,9 @@ export default function RecipeDetailPage() {
                   </span>
                   <div>
                     {step.title && <p className="font-semibold text-foreground mb-1">{step.title}</p>}
-                    <p className="text-foreground/90 leading-relaxed">{step.content}</p>
+                    <div className="text-foreground/90 leading-relaxed">
+                      <LexicalRenderer jsonContent={step.content} />
+                    </div>
                   </div>
                 </li>
               ))}
@@ -318,7 +323,9 @@ export default function RecipeDetailPage() {
       {recipe.notes && (
         <div className={`mb-10 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg ${printCompact ? 'print:hidden' : ''}`}>
           <h2 className="text-base font-semibold text-foreground mb-2">Notes</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{recipe.notes}</p>
+          <div className="text-sm text-foreground/90 leading-relaxed">
+            <LexicalRenderer jsonContent={recipe.notes} />
+          </div>
         </div>
       )}
 
