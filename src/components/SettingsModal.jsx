@@ -37,6 +37,11 @@ export default function SettingsModal({ open, onClose }) {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
 
+  // Delete account
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const { logout } = useAuth();
+
   useEffect(() => {
     if (!open) return;
     setLoading(true);
@@ -145,6 +150,30 @@ export default function SettingsModal({ open, onClose }) {
       setPwError('An error occurred.');
     } finally {
       setPwSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const res = await fetchWithAuth('/api/auth/delete-account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.ok) {
+        // Account deleted successfully, log out and redirect
+        logout();
+        window.location.href = '/';
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to delete account. Please try again.');
+      }
+    } catch {
+      alert('An error occurred while deleting your account. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -282,48 +311,93 @@ export default function SettingsModal({ open, onClose }) {
 
                 {/* ── SECURITY ── */}
                 {activeTab === 'Security' && (
-                  <form onSubmit={handleChangePassword} className="space-y-4">
-                    <h3 className="text-sm font-medium text-foreground">Change Password</h3>
-                    <div>
-                      <label className="block text-sm text-muted-foreground mb-1">Current Password</label>
-                      <input
-                        type="password"
-                        value={pwForm.current_password}
-                        onChange={(e) => setPwForm((p) => ({ ...p, current_password: e.target.value }))}
-                        required
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
+                  <div className="space-y-6">
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <h3 className="text-sm font-medium text-foreground">Change Password</h3>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-1">Current Password</label>
+                        <input
+                          type="password"
+                          value={pwForm.current_password}
+                          onChange={(e) => setPwForm((p) => ({ ...p, current_password: e.target.value }))}
+                          required
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-1">New Password</label>
+                        <input
+                          type="password"
+                          value={pwForm.new_password}
+                          onChange={(e) => setPwForm((p) => ({ ...p, new_password: e.target.value }))}
+                          required
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-1">Confirm New Password</label>
+                        <input
+                          type="password"
+                          value={pwForm.new_password_confirm}
+                          onChange={(e) => setPwForm((p) => ({ ...p, new_password_confirm: e.target.value }))}
+                          required
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                      {pwError && <p className="text-sm text-red-500">{pwError}</p>}
+                      {pwSuccess && <p className="text-sm text-green-500">{pwSuccess}</p>}
+                      <button
+                        type="submit"
+                        disabled={pwSaving}
+                        className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {pwSaving ? 'Saving…' : 'Change Password'}
+                      </button>
+                    </form>
+
+                    <div className="pt-4 border-t border-border">
+                      <h3 className="text-sm font-medium text-foreground mb-2">Delete Account</h3>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Permanently delete your account. Your content will remain published but will no longer be associated with you.
+                      </p>
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+                      >
+                        Delete Account
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-sm text-muted-foreground mb-1">New Password</label>
-                      <input
-                        type="password"
-                        value={pwForm.new_password}
-                        onChange={(e) => setPwForm((p) => ({ ...p, new_password: e.target.value }))}
-                        required
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-muted-foreground mb-1">Confirm New Password</label>
-                      <input
-                        type="password"
-                        value={pwForm.new_password_confirm}
-                        onChange={(e) => setPwForm((p) => ({ ...p, new_password_confirm: e.target.value }))}
-                        required
-                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                    {pwError && <p className="text-sm text-red-500">{pwError}</p>}
-                    {pwSuccess && <p className="text-sm text-green-500">{pwSuccess}</p>}
-                    <button
-                      type="submit"
-                      disabled={pwSaving}
-                      className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                    >
-                      {pwSaving ? 'Saving…' : 'Change Password'}
-                    </button>
-                  </form>
+
+                    {showDeleteConfirm && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                        <div className="bg-card border border-border rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+                          <h3 className="text-lg font-semibold text-foreground mb-2">Delete Account?</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            This action cannot be undone. Your account will be permanently deleted, and you will be logged out.
+                          </p>
+                          <p className="text-sm text-muted-foreground mb-6">
+                            Your blog posts and recipes will remain published but will show no author.
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setShowDeleteConfirm(false)}
+                              disabled={deleteLoading}
+                              className="flex-1 px-4 py-2 text-sm rounded-md border border-input hover:bg-accent transition-colors disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleDeleteAccount}
+                              disabled={deleteLoading}
+                              className="flex-1 px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                            >
+                              {deleteLoading ? 'Deleting…' : 'Delete Account'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* ── NOTIFICATIONS ── */}
