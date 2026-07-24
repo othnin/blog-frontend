@@ -2,6 +2,58 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './LexicalRenderer.module.css';
+import { API_ENDPOINTS } from '@/config/api';
+
+function BlogImage({ filename, alt, width }) {
+  const [src, setSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!filename) {
+      setLoading(false);
+      return;
+    }
+
+    const isFullUrl = filename.startsWith('http://') || filename.startsWith('https://');
+
+    if (isFullUrl) {
+      setSrc(filename);
+      setLoading(false);
+      return;
+    }
+
+    const fetchSignedUrl = async () => {
+      try {
+        const response = await fetch(
+          `${API_ENDPOINTS.blog.imageUrl}?filename=${encodeURIComponent(filename)}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSrc(data.url);
+        } else {
+          console.error('Failed to fetch signed URL:', response.statusText);
+        }
+      } catch (err) {
+        console.error('Failed to fetch signed image URL:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [filename]);
+
+  if (loading) {
+    return <div className={styles.imagePlaceholder}>Loading image...</div>;
+  }
+
+  if (!src) {
+    return <div className={styles.imagePlaceholder}>Failed to load image</div>;
+  }
+
+  const imgStyle = width ? { width: `${width}px`, height: 'auto', maxWidth: '100%' } : {};
+  return <img src={src} alt={alt || ''} className={styles.rendererImage} style={imgStyle} loading="lazy" />;
+}
 
 function TweetEmbed({ tweetUrl }) {
   const containerRef = useRef(null);
@@ -159,13 +211,11 @@ export default function LexicalRenderer({ jsonContent }) {
 
       case 'image':
         return (
-          <img
+          <BlogImage
             key={index}
-            src={node.src}
+            filename={node.src}
             alt={node.altText || ''}
-            className={styles.rendererImage}
-            loading="lazy"
-            style={node.width ? { width: `${node.width}px`, height: 'auto', maxWidth: '100%' } : {}}
+            width={node.width}
           />
         );
 

@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     myPosts: '/api/blog/my-posts',
     myPost: (id) => `/api/blog/my-posts/${id}`,
     uploadImage: '/api/blog/upload-image',
+    imageUrl: '/api/blog/image-url',
     comments: (postId) => `/api/blog/posts/${postId}/comments/`,
     comment: (commentId) => `/api/blog/comments/${commentId}/`,
     likePost: (slug) => `/api/blog/posts/${slug}/like/`,

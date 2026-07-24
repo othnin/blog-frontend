@@ -662,8 +662,8 @@ function ToolbarPlugin() {
         alert(err.detail || 'Image upload failed.');
         return;
       }
-      const { url } = await res.json();
-      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: file.name });
+      const { filename } = await res.json();
+      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: filename, altText: file.name });
     } catch (err) {
       alert('Image upload error: ' + err.message);
     } finally {

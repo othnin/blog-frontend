@@ -156,6 +156,16 @@
   font-style: italic;
 }
 
+.imagePlaceholder {
+  padding: 1rem;
+  background: #f3f4f6;
+  border: 1px dashed #d1d5db;
+  border-radius: 0.375rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 1rem 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .horizontalRule {
     border-top-color: #4b5563;
