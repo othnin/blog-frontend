@@ -62,6 +62,7 @@ import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $getNearestNodeOfType, mergeRegister } from '@lexical/utils';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
+import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 
 import styles from './LexicalEditor.module.css';
 
@@ -75,6 +76,7 @@ function ImageComponent({ src, altText, nodeKey, editor, width }) {
   const [localWidth, setLocalWidth] = useState(width ?? null);
   const imgRef = useRef(null);
   const latestWidthRef = useRef(localWidth);
+  const { src: resolvedSrc, loading } = useResolvedImageUrl(src);
 
   // Sync when undo/redo changes the node's width externally
   useEffect(() => {
@@ -143,7 +145,7 @@ function ImageComponent({ src, altText, nodeKey, editor, width }) {
     >
       <img
         ref={imgRef}
-        src={src}
+        src={resolvedSrc}
         alt={altText}
         className={styles.editorImage}
         style={imgStyle}

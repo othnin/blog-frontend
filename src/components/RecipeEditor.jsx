@@ -5,6 +5,7 @@ import { fetchWithAuth } from '@/lib/tokenUtils';
 import { API_ENDPOINTS } from '@/config/api';
 import TagSelector from '@/components/TagSelector';
 import LexicalEditor from '@/components/LexicalEditor';
+import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 import { GripVertical, Trash2, Plus, ArrowUp, ArrowDown, X } from 'lucide-react';
 
 const CUISINE_OPTIONS = [
@@ -46,6 +47,48 @@ function emptyIngredient() {
 
 function emptyInstruction() {
   return { _key: Math.random(), title: '', content: '' };
+}
+
+// ─── ImageThumbnail ───────────────────────────────────────────────────────────
+function ImageThumbnail({ imageUrl, idx, images, moveImageLeft, moveImageRight, removeImage }) {
+  const { src: resolvedSrc } = useResolvedImageUrl(imageUrl);
+  const displaySrc = resolvedSrc || imageUrl;
+
+  return (
+    <div className="relative w-28 h-28 rounded-md overflow-hidden border border-border group">
+      <img src={displaySrc} alt="" className="w-full h-full object-cover" />
+      {idx === 0 && (
+        <span className="absolute top-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+          Hero
+        </span>
+      )}
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+        <button
+          type="button"
+          onClick={() => moveImageLeft(idx)}
+          className="p-1 rounded bg-white/20 hover:bg-white/40 text-white disabled:opacity-30"
+          disabled={idx === 0}
+        >
+          <ArrowUp className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={() => moveImageRight(idx)}
+          className="p-1 rounded bg-white/20 hover:bg-white/40 text-white disabled:opacity-30"
+          disabled={idx === images.length - 1}
+        >
+          <ArrowDown className="w-3 h-3" />
+        </button>
+        <button
+          type="button"
+          onClick={() => removeImage(idx)}
+          className="p-1 rounded bg-red-500/80 hover:bg-red-500 text-white"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -110,7 +153,7 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
       const res = await fetchWithAuth(API_ENDPOINTS.blog.uploadImage, { method: 'POST', body: fd });
       if (!res.ok) { setImageError('Upload failed'); return; }
       const data = await res.json();
-      setImages((prev) => [...prev, data.url]);
+      setImages((prev) => [...prev, data.filename]);
     } catch {
       setImageError('Upload failed');
     } finally {
@@ -253,40 +296,8 @@ export default function RecipeEditor({ initialData = null, onSubmit, submitting,
         {imageError && <p className="text-sm text-red-500">{imageError}</p>}
 
         <div className="flex flex-wrap gap-3">
-          {images.map((url, idx) => (
-            <div key={url + idx} className="relative w-28 h-28 rounded-md overflow-hidden border border-border group">
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              {idx === 0 && (
-                <span className="absolute top-1 left-1 text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
-                  Hero
-                </span>
-              )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => moveImageLeft(idx)}
-                  className="p-1 rounded bg-white/20 hover:bg-white/40 text-white disabled:opacity-30"
-                  disabled={idx === 0}
-                >
-                  <ArrowUp className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveImageRight(idx)}
-                  className="p-1 rounded bg-white/20 hover:bg-white/40 text-white disabled:opacity-30"
-                  disabled={idx === images.length - 1}
-                >
-                  <ArrowDown className="w-3 h-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className="p-1 rounded bg-red-500/80 hover:bg-red-500 text-white"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
+          {images.map((imageUrl, idx) => (
+            <ImageThumbnail key={imageUrl + idx} imageUrl={imageUrl} idx={idx} images={images} moveImageLeft={moveImageLeft} moveImageRight={moveImageRight} removeImage={removeImage} />
           ))}
         </div>
 

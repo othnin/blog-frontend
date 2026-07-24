@@ -1,47 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import styles from './LexicalRenderer.module.css';
-import { API_ENDPOINTS } from '@/config/api';
+import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 
 function BlogImage({ filename, alt, width }) {
-  const [src, setSrc] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!filename) {
-      setLoading(false);
-      return;
-    }
-
-    const isFullUrl = filename.startsWith('http://') || filename.startsWith('https://');
-
-    if (isFullUrl) {
-      setSrc(filename);
-      setLoading(false);
-      return;
-    }
-
-    const fetchSignedUrl = async () => {
-      try {
-        const response = await fetch(
-          `${API_ENDPOINTS.blog.imageUrl}?filename=${encodeURIComponent(filename)}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setSrc(data.url);
-        } else {
-          console.error('Failed to fetch signed URL:', response.statusText);
-        }
-      } catch (err) {
-        console.error('Failed to fetch signed image URL:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSignedUrl();
-  }, [filename]);
+  const { src, loading } = useResolvedImageUrl(filename);
 
   if (loading) {
     return <div className={styles.imagePlaceholder}>Loading image...</div>;
