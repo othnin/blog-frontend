@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     refreshToken: '/api/token/refresh',
     settings: '/api/auth/settings',
     avatar: '/api/auth/avatar',
+    avatarUrl: '/api/auth/avatar-url',
     changePassword: '/api/auth/change-password',
     profile: (username) => `/api/auth/profile/${username}`,
   },

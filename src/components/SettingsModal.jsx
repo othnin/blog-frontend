@@ -111,9 +111,16 @@ export default function SettingsModal({ open, onClose }) {
         setAvatarPreview(null);
       } else {
         const data = await res.json();
-        // Strip the backend origin so the URL routes through the Next.js /media/* proxy
-        const normalized = data.avatar_url ? data.avatar_url.replace(/^https?:\/\/[^/]+/, '') : null;
-        setAvatar(normalized);
+        // Fetch fresh signed URL for the newly uploaded avatar
+        if (data.filename) {
+          const urlRes = await fetch(`/api/auth/avatar-url?filename=${encodeURIComponent(data.filename)}`);
+          if (urlRes.ok) {
+            const urlData = await urlRes.json();
+            setAvatar(urlData.url);
+          } else {
+            setAvatarError('Upload succeeded but could not fetch URL.');
+          }
+        }
       }
     } catch {
       setAvatarError('Upload failed.');
