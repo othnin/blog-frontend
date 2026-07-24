@@ -13,6 +13,8 @@
       return {
         beforeFiles: [
           {
+            // Local dev glue: in dev, AWS_STORAGE_BUCKET_NAME is unset, so Django serves MEDIA_ROOT directly via /media/* routes.
+            // In production, all storage URLs are fully-qualified presigned URLs, so this rewrite is inert.
             source: '/media/:path*',
             destination: `${djangoBaseUrl}/media/:path*`,
           },

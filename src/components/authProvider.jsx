@@ -50,9 +50,7 @@ export function AuthProvider({ children }) {
       .then((data) => {
         if (data) {
           const raw = data.profile?.avatar || null;
-          // Strip the backend origin so the URL routes through the Next.js /media/* proxy
-          const normalized = raw ? raw.replace(/^https?:\/\/[^/]+/, '') : null;
-          setAvatar(normalized);
+          setAvatar(raw);
         }
       })
       .catch(() => {});
