@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './LexicalRenderer.module.css';
 import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 
