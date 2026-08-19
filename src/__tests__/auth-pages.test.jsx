@@ -278,44 +278,45 @@ describe('ResetPasswordForm', () => {
 // ─── VerifyEmailForm (FE-003) ─────────────────────────────────────────────────
 
 describe('VerifyEmailForm', () => {
-  beforeEach(() => {
-    // email present, no token (manual entry mode)
+  it('renders verify email form when no token in URL', () => {
     useSearchParams.mockReturnValue({
-      get: (key) => ({ email: 'user@example.com' }[key] || null),
+      get: (key) => null,
     });
-  });
-
-  it('renders verify email form with email pre-filled', () => {
     render(<VerifyEmailForm />);
     expect(screen.getByRole('heading', { name: /verify email/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter token from email/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to login/i })).toHaveAttribute('href', '/login');
+    expect(screen.getByPlaceholderText(/your-email@example.com/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /resend verification email/i })).toBeInTheDocument();
   });
 
-  it('submit button is disabled when token field is empty', () => {
+  it('shows loading spinner when token and email in URL', () => {
+    useSearchParams.mockReturnValue({
+      get: (key) => ({ email: 'user@example.com', token: 'valid-token-xyz' }[key] || null),
+    });
     render(<VerifyEmailForm />);
-    expect(screen.getByRole('button', { name: /verify email/i })).toBeDisabled();
+    expect(screen.getByText(/verifying your email/i)).toBeInTheDocument();
   });
 
-  it('shows success message after valid token submission', async () => {
-    global.fetch.mockResolvedValueOnce(ok({ message: 'Verified' }));
-    const user = userEvent.setup();
-    render(<VerifyEmailForm />);
-    await user.type(screen.getByPlaceholderText(/enter token from email/i), 'valid-token-abc');
-    await user.click(screen.getByRole('button', { name: /verify email/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/email verified/i)).toBeInTheDocument()
-    );
-  });
-
-  it('shows error on invalid token', async () => {
+  it('shows error message when token is invalid', () => {
+    useSearchParams.mockReturnValue({
+      get: (key) => ({ email: 'user@example.com', token: 'bad-token' }[key] || null),
+    });
     global.fetch.mockResolvedValueOnce(fail({ detail: 'Token is invalid or expired' }));
+    render(<VerifyEmailForm />);
+    expect(screen.getByText(/verification failed/i)).toBeInTheDocument();
+  });
+
+  it('allows resending verification email', async () => {
+    useSearchParams.mockReturnValue({
+      get: (key) => null,
+    });
+    global.fetch.mockResolvedValueOnce(ok({ message: 'Email sent' }));
     const user = userEvent.setup();
     render(<VerifyEmailForm />);
-    await user.type(screen.getByPlaceholderText(/enter token from email/i), 'bad-token');
-    await user.click(screen.getByRole('button', { name: /verify email/i }));
+    const emailInput = screen.getByPlaceholderText(/your-email@example.com/i);
+    await user.type(emailInput, 'test@example.com');
+    await user.click(screen.getByRole('button', { name: /resend verification email/i }));
     await waitFor(() =>
-      expect(screen.getByText('Token is invalid or expired')).toBeInTheDocument()
+      expect(screen.getByText(/verification email sent/i)).toBeInTheDocument()
     );
   });
 });
