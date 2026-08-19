@@ -296,13 +296,15 @@ describe('VerifyEmailForm', () => {
     expect(screen.getByText(/verifying your email/i)).toBeInTheDocument();
   });
 
-  it('shows error message when token is invalid', () => {
+  it('shows error message when token is invalid', async () => {
     useSearchParams.mockReturnValue({
       get: (key) => ({ email: 'user@example.com', token: 'bad-token' }[key] || null),
     });
     global.fetch.mockResolvedValueOnce(fail({ detail: 'Token is invalid or expired' }));
     render(<VerifyEmailForm />);
-    expect(screen.getByText(/verification failed/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText(/verification failed/i)).toBeInTheDocument()
+    );
   });
 
   it('allows resending verification email', async () => {
