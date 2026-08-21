@@ -1013,14 +1013,29 @@ function ToolbarPlugin({ enableFootnotes = true }) {
   };
 
   const handleInsertFootnoteSave = (title, body) => {
-    editor.update(() => {
-      if (capturedSelectionRef.current) {
-        $setSelection(capturedSelectionRef.current);
-      }
-      $insertNodes([$createFootnoteNode(title, body)]);
-    });
-    capturedSelectionRef.current = null;
-    setFootnoteDialogOpen(false);
+    try {
+      editor.update(() => {
+        // Try to restore the selection if it was captured
+        if (capturedSelectionRef.current) {
+          try {
+            $setSelection(capturedSelectionRef.current);
+          } catch (e) {
+            // If selection restoration fails, just proceed without it
+            console.warn('Failed to restore selection:', e);
+          }
+        }
+        $insertNodes([$createFootnoteNode(title, body)]);
+      });
+    } catch (error) {
+      console.error('Error inserting footnote:', error);
+    } finally {
+      capturedSelectionRef.current = null;
+      setFootnoteDialogOpen(false);
+      // Ensure editor gets focus back after dialog closes
+      setTimeout(() => {
+        editor.focus();
+      }, 0);
+    }
   };
 
   // ── Format button helper ─────────────────────────────────────────────────────
