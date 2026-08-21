@@ -198,6 +198,33 @@
   margin: 1rem 0;
 }
 
+/* ─── Footnote marker ────────────────────────────────────────────── */
+.footnoteMarker {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background-color: #22c55e;
+  vertical-align: middle;
+  margin: 0 0.125rem;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.footnoteMarker:hover {
+  background-color: #16a34a;
+  transform: scale(1.15);
+}
+
+.footnoteBody {
+  white-space: pre-wrap;
+  margin-top: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
 @media (prefers-color-scheme: dark) {
   .horizontalRule {
     border-top-color: #4b5563;
@@ -223,6 +250,14 @@
 
   .link:hover {
     color: #93c5fd;
+  }
+
+  .footnoteMarker {
+    background-color: #4ade80;
+  }
+
+  .footnoteMarker:hover {
+    background-color: #22c55e;
   }
 
   .error {

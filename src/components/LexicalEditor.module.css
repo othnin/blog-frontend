@@ -489,6 +489,24 @@
   margin: 16px 0;
 }
 
+/* ─── Footnote marker ────────────────────────────────────────────── */
+.footnoteMarker {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  vertical-align: middle;
+  margin: 0 2px;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.footnoteMarker:hover {
+  background-color: #16a34a;
+  transform: scale(1.15);
+}
+
 /* ─── Code highlight tokens ──────────────────────────────────────── */
 .tokenComment   { color: #6b7280; }
 .tokenPunctuation { color: #9ca3af; }
@@ -569,6 +587,14 @@
 
   .horizontalRule {
     border-top-color: #4b5563;
+  }
+
+  .footnoteMarker {
+    background-color: #4ade80;
+  }
+
+  .footnoteMarker:hover {
+    background-color: #22c55e;
   }
 
   .resizeHandle {

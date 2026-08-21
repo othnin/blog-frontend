@@ -13,6 +13,7 @@ export default function CommentEditor({ initialValue = '', onSubmit, onCancel, s
         key={initialValue}
         initialValue={initialValue}
         onChange={(json) => setContentJson(json)}
+        enableFootnotes={false}
       />
       <div className="flex gap-2 justify-end pt-1">
         {onCancel && (

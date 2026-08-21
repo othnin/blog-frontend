@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './LexicalRenderer.module.css';
 import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 // Lexical ElementNode.format is the string ElementFormatType ('left'|'center'|'right'|'justify'|'start'|'end'|'')
 function textAlignStyle(format) {
@@ -32,6 +33,17 @@ function BlogImage({ filename, alt, width, align }) {
 
   const imgStyle = width ? { width: `${width}px`, height: 'auto', maxWidth: '100%' } : {};
   return <img src={src} alt={alt || ''} className={`${styles.rendererImage} ${mediaAlignClass(align)}`} style={imgStyle} loading="lazy" />;
+}
+
+function FootnoteMarker({ title, body, onOpen }) {
+  return (
+    <button
+      type="button"
+      className={styles.footnoteMarker}
+      aria-label={`Footnote: ${title}`}
+      onClick={() => onOpen({ title, body })}
+    />
+  );
 }
 
 function TweetEmbed({ tweetUrl, align }) {
@@ -71,6 +83,13 @@ function TweetEmbed({ tweetUrl, align }) {
 export default function LexicalRenderer({ jsonContent }) {
   const [parsedContent, setParsedContent] = useState(null);
   const [error, setError] = useState(null);
+  const [activeFootnote, setActiveFootnote] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const openFootnote = (footnote) => {
+    setActiveFootnote(footnote);
+    setSheetOpen(true);
+  };
 
   useEffect(() => {
     try {
@@ -222,6 +241,16 @@ export default function LexicalRenderer({ jsonContent }) {
       case 'tweet':
         return <TweetEmbed key={index} tweetUrl={node.tweetUrl} align={node.align} />;
 
+      case 'footnote':
+        return (
+          <FootnoteMarker
+            key={index}
+            title={node.title}
+            body={node.body}
+            onOpen={openFootnote}
+          />
+        );
+
       default:
         return node.children?.map((child, idx) => renderNode(child, idx));
     }
@@ -236,5 +265,17 @@ export default function LexicalRenderer({ jsonContent }) {
   }
 
   const rootNode = parsedContent.root ?? parsedContent;
-  return <div className={styles.renderer}>{renderNode(rootNode, 0)}</div>;
+  return (
+    <div className={styles.renderer}>
+      {renderNode(rootNode, 0)}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{activeFootnote?.title}</SheetTitle>
+          </SheetHeader>
+          <div className={styles.footnoteBody}>{activeFootnote?.body}</div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
 }

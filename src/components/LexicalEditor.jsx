@@ -21,6 +21,15 @@ import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
@@ -34,6 +43,7 @@ import {
   $createParagraphNode,
   $insertNodes,
   $getNodeByKey,
+  $setSelection,
   FORMAT_TEXT_COMMAND,
   FORMAT_ELEMENT_COMMAND,
   INDENT_CONTENT_COMMAND,
@@ -600,6 +610,169 @@ function TweetPlugin() {
   return null;
 }
 
+// ─── FootnoteNode ────────────────────────────────────────────────────────────
+
+class FootnoteNode extends DecoratorNode {
+  static getType() { return 'footnote'; }
+  static clone(node) { return new FootnoteNode(node.__title, node.__body, node.__key); }
+
+  constructor(title, body, key) {
+    super(key);
+    this.__title = title;
+    this.__body = body;
+  }
+
+  static importJSON(s) { return new FootnoteNode(s.title, s.body); }
+  exportJSON() {
+    return { type: 'footnote', version: 1, title: this.__title, body: this.__body };
+  }
+
+  setTitleAndBody(title, body) {
+    const self = this.getWritable();
+    self.__title = title;
+    self.__body = body;
+  }
+
+  getTitle() { return this.__title; }
+  getBody() { return this.__body; }
+
+  isInline() { return true; }
+  createDOM() {
+    const span = document.createElement('span');
+    span.style.display = 'inline-block';
+    return span;
+  }
+  updateDOM() { return false; }
+
+  decorate(editor) {
+    return (
+      <FootnoteComponent
+        nodeKey={this.__key}
+        title={this.__title}
+        body={this.__body}
+        editor={editor}
+      />
+    );
+  }
+}
+
+function $createFootnoteNode(title, body) { return new FootnoteNode(title, body); }
+function $isFootnoteNode(node) { return node instanceof FootnoteNode; }
+
+// ─── FootnoteDialog (shared insert + edit) ────────────────────────────────────
+
+function FootnoteDialog({ open, onOpenChange, initialTitle = '', initialBody = '', onSave, onDelete, mode }) {
+  const [title, setTitle] = useState(initialTitle);
+  const [body, setBody] = useState(initialBody);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(initialTitle);
+      setBody(initialBody);
+    }
+  }, [open, initialTitle, initialBody]);
+
+  const canSave = title.trim().length > 0 && body.trim().length > 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{mode === 'edit' ? 'Edit Footnote' : 'Insert Footnote'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+          />
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Body text"
+            rows={5}
+          />
+        </div>
+        <DialogFooter className="flex justify-between">
+          <div>
+            {mode === 'edit' && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+              >
+                Delete footnote
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="px-3 py-2 text-sm border rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!canSave}
+              onClick={() => onSave(title.trim(), body.trim())}
+              className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── FootnoteComponent ────────────────────────────────────────────────────────
+
+function FootnoteComponent({ nodeKey, title, body, editor }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleSave = (newTitle, newBody) => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.setTitleAndBody(newTitle, newBody);
+    });
+    setDialogOpen(false);
+  };
+
+  const handleDelete = () => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+    setDialogOpen(false);
+  };
+
+  return (
+    <>
+      <span
+        role="button"
+        tabIndex={-1}
+        className={styles.footnoteMarker}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}
+        title="Edit footnote"
+      />
+      <FootnoteDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialTitle={title}
+        initialBody={body}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        mode="edit"
+      />
+    </>
+  );
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FONT_FAMILIES = [
@@ -625,7 +798,7 @@ const DEFAULT_FONT_SIZE = 16;
 
 // ─── ToolbarPlugin ────────────────────────────────────────────────────────────
 
-function ToolbarPlugin() {
+function ToolbarPlugin({ enableFootnotes = true }) {
   const [editor] = useLexicalComposerContext();
   const [blockType, setBlockType] = useState('paragraph');
   const [fontFamily, setFontFamily] = useState('Default');
@@ -637,7 +810,9 @@ function ToolbarPlugin() {
   const [isLink, setIsLink] = useState(false);
   const [fontColor, setFontColor] = useState('#000000');
   const [isUploading, setIsUploading] = useState(false);
+  const [footnoteDialogOpen, setFootnoteDialogOpen] = useState(false);
   const imageInputRef = useRef(null);
+  const capturedSelectionRef = useRef(null);
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -821,6 +996,31 @@ function ToolbarPlugin() {
       return;
     }
     editor.dispatchCommand(INSERT_TWEET_COMMAND, { tweetUrl: url });
+  };
+
+  // ── Footnote insert ───────────────────────────────────────────────────────────
+
+  const openFootnoteDialog = () => {
+    editor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        capturedSelectionRef.current = selection.clone();
+      } else {
+        capturedSelectionRef.current = null;
+      }
+    });
+    setFootnoteDialogOpen(true);
+  };
+
+  const handleInsertFootnoteSave = (title, body) => {
+    editor.update(() => {
+      if (capturedSelectionRef.current) {
+        $setSelection(capturedSelectionRef.current);
+      }
+      $insertNodes([$createFootnoteNode(title, body)]);
+    });
+    capturedSelectionRef.current = null;
+    setFootnoteDialogOpen(false);
   };
 
   // ── Format button helper ─────────────────────────────────────────────────────
@@ -1010,9 +1210,24 @@ function ToolbarPlugin() {
             <DropdownMenu.Item className={styles.dropdownItem} onSelect={insertTweet}>
               X (Tweet)
             </DropdownMenu.Item>
+            {enableFootnotes && (
+              <DropdownMenu.Item className={styles.dropdownItem} onSelect={openFootnoteDialog}>
+                Footnote
+              </DropdownMenu.Item>
+            )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
+
+      {/* Footnote insert dialog */}
+      <FootnoteDialog
+        open={footnoteDialogOpen}
+        onOpenChange={setFootnoteDialogOpen}
+        initialTitle=""
+        initialBody=""
+        onSave={handleInsertFootnoteSave}
+        mode="insert"
+      />
 
     </div>
   );
@@ -1020,7 +1235,7 @@ function ToolbarPlugin() {
 
 // ─── LexicalEditor ────────────────────────────────────────────────────────────
 
-export default function LexicalEditor({ initialValue = '', onChange }) {
+export default function LexicalEditor({ initialValue = '', onChange, enableFootnotes = true }) {
   const containerRef = useRef(null);
   const [editorHeight, setEditorHeight] = useState(null); // null = use CSS default
   const resizeCleanupRef = useRef(null);
@@ -1084,6 +1299,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
       HorizontalRuleNode,
       YouTubeNode,
       TweetNode,
+      FootnoteNode,
     ],
     onError: (error) => console.error('Lexical error:', error),
   };
@@ -1104,7 +1320,7 @@ export default function LexicalEditor({ initialValue = '', onChange }) {
       style={editorHeight ? { height: editorHeight } : undefined}
     >
       <LexicalComposer initialConfig={initialConfig}>
-        <ToolbarPlugin />
+        <ToolbarPlugin enableFootnotes={enableFootnotes} />
         <div className={styles.editorWrapper}>
           <RichTextPlugin
             contentEditable={<ContentEditable className={styles.contentEditable} />}
