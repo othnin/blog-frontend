@@ -42,7 +42,9 @@ function FootnoteMarker({ title, body, onOpen }) {
       className={styles.footnoteMarker}
       aria-label={`Footnote: ${title}`}
       onClick={() => onOpen({ title, body })}
-    />
+    >
+      {title}
+    </button>
   );
 }
 

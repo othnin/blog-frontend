@@ -491,15 +491,23 @@
 
 /* ─── Footnote marker ────────────────────────────────────────────── */
 .footnoteMarker {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background-color: #22c55e;
-  vertical-align: middle;
-  margin: 0 2px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: super;
+  margin: 0 1px;
+  padding: 0;
+  border: none;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.1s;
+  line-height: 1;
 }
 
 .footnoteMarker:hover {
@@ -591,10 +599,12 @@
 
   .footnoteMarker {
     background-color: #4ade80;
+    color: #1f2937;
   }
 
   .footnoteMarker:hover {
     background-color: #22c55e;
+    color: #ffffff;
   }
 
   .resizeHandle {

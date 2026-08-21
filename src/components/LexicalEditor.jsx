@@ -758,8 +758,10 @@ function FootnoteComponent({ nodeKey, title, body, editor }) {
         className={styles.footnoteMarker}
         onMouseDown={(e) => e.preventDefault()}
         onClick={(e) => { e.stopPropagation(); setDialogOpen(true); }}
-        title="Edit footnote"
-      />
+        title={`Footnote: ${title}`}
+      >
+        {title}
+      </span>
       <FootnoteDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
