@@ -142,6 +142,38 @@
   max-width: 550px;
 }
 
+/* ─── Media alignment (image / youtube / tweet) ──────────────────── */
+.alignLeft {
+  float: left;
+  margin: 0.25rem 1rem 0.5rem 0;
+  max-width: 50%;
+}
+
+.alignRight {
+  float: right;
+  margin: 0.25rem 0 0.5rem 1rem;
+  max-width: 50%;
+}
+
+.alignCenter {
+  float: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 640px) {
+  .alignLeft,
+  .alignRight,
+  .alignCenter {
+    float: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
 .error {
   padding: 1rem;
   background: #fee2e2;

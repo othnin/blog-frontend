@@ -4,7 +4,22 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './LexicalRenderer.module.css';
 import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 
-function BlogImage({ filename, alt, width }) {
+// Lexical ElementNode.format is the string ElementFormatType ('left'|'center'|'right'|'justify'|'start'|'end'|'')
+function textAlignStyle(format) {
+  return format ? { textAlign: format } : undefined;
+}
+
+// Media nodes (image/youtube/tweet) store a simpler 'none'|'left'|'center'|'right' align field.
+function mediaAlignClass(align) {
+  switch (align) {
+    case 'left': return styles.alignLeft;
+    case 'right': return styles.alignRight;
+    case 'center': return styles.alignCenter;
+    default: return '';
+  }
+}
+
+function BlogImage({ filename, alt, width, align }) {
   const { src, loading } = useResolvedImageUrl(filename);
 
   if (loading) {
@@ -16,10 +31,10 @@ function BlogImage({ filename, alt, width }) {
   }
 
   const imgStyle = width ? { width: `${width}px`, height: 'auto', maxWidth: '100%' } : {};
-  return <img src={src} alt={alt || ''} className={styles.rendererImage} style={imgStyle} loading="lazy" />;
+  return <img src={src} alt={alt || ''} className={`${styles.rendererImage} ${mediaAlignClass(align)}`} style={imgStyle} loading="lazy" />;
 }
 
-function TweetEmbed({ tweetUrl }) {
+function TweetEmbed({ tweetUrl, align }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -45,7 +60,7 @@ function TweetEmbed({ tweetUrl }) {
   }, [tweetUrl]);
 
   return (
-    <div ref={containerRef} className={styles.tweetWrapper}>
+    <div ref={containerRef} className={`${styles.tweetWrapper} ${mediaAlignClass(align)}`}>
       <blockquote className="twitter-tweet">
         <a href={tweetUrl}>{tweetUrl}</a>
       </blockquote>
@@ -83,7 +98,7 @@ export default function LexicalRenderer({ jsonContent }) {
 
       case 'paragraph':
         return (
-          <p key={index} className={styles.paragraph}>
+          <p key={index} className={styles.paragraph} style={textAlignStyle(node.format)}>
             {node.children?.map((child, idx) => renderNode(child, idx))}
           </p>
         );
@@ -121,7 +136,7 @@ export default function LexicalRenderer({ jsonContent }) {
       case 'heading':
         const HeadingTag = `h${node.tag || 1}`;
         return (
-          <HeadingTag key={index} className={styles[`heading${node.tag || 1}`]}>
+          <HeadingTag key={index} className={styles[`heading${node.tag || 1}`]} style={textAlignStyle(node.format)}>
             {node.children?.map((child, idx) => renderNode(child, idx))}
           </HeadingTag>
         );
@@ -141,14 +156,14 @@ export default function LexicalRenderer({ jsonContent }) {
 
       case 'listitem':
         return (
-          <li key={index} className={styles.listItem}>
+          <li key={index} className={styles.listItem} style={textAlignStyle(node.format)}>
             {node.children?.map((child, idx) => renderNode(child, idx))}
           </li>
         );
 
       case 'quote':
         return (
-          <blockquote key={index} className={styles.blockquote}>
+          <blockquote key={index} className={styles.blockquote} style={textAlignStyle(node.format)}>
             {node.children?.map((child, idx) => renderNode(child, idx))}
           </blockquote>
         );
@@ -180,6 +195,7 @@ export default function LexicalRenderer({ jsonContent }) {
             filename={node.src}
             alt={node.altText || ''}
             width={node.width}
+            align={node.align}
           />
         );
 
@@ -190,7 +206,7 @@ export default function LexicalRenderer({ jsonContent }) {
         return (
           <div
             key={index}
-            className={styles.youtubeWrapper}
+            className={`${styles.youtubeWrapper} ${mediaAlignClass(node.align)}`}
             style={node.width ? { width: `${node.width}px`, maxWidth: '100%' } : {}}
           >
             <iframe
@@ -204,7 +220,7 @@ export default function LexicalRenderer({ jsonContent }) {
         );
 
       case 'tweet':
-        return <TweetEmbed key={index} tweetUrl={node.tweetUrl} />;
+        return <TweetEmbed key={index} tweetUrl={node.tweetUrl} align={node.align} />;
 
       default:
         return node.children?.map((child, idx) => renderNode(child, idx));

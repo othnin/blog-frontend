@@ -20,6 +20,7 @@ import {
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
 import { CodeNode, CodeHighlightNode } from '@lexical/code';
@@ -66,11 +67,54 @@ import { useResolvedImageUrl } from '@/hooks/useResolvedImageUrl';
 
 import styles from './LexicalEditor.module.css';
 
+// ─── MediaControls (shared overlay for align buttons + delete) ────────────────
+
+function MediaControls({ editor, nodeKey, align, onDelete }) {
+  const setAlign = (newAlign) => {
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node && typeof node.setAlign === 'function') {
+        node.setAlign(align === newAlign ? 'none' : newAlign);
+      }
+    });
+  };
+
+  const alignBtn = (value, title, Icon) => (
+    <button
+      type="button"
+      className={`${styles.mediaAlignBtn}${align === value ? ` ${styles.mediaAlignBtnActive}` : ''}`}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={(e) => { e.stopPropagation(); setAlign(value); }}
+      title={title}
+    >
+      <Icon size={14} />
+    </button>
+  );
+
+  return (
+    <div className={styles.mediaControls}>
+      {alignBtn('left', 'Align left (wrap text)', AlignLeft)}
+      {alignBtn('center', 'Align center', AlignCenter)}
+      {alignBtn('right', 'Align right (wrap text)', AlignRight)}
+      <span className={styles.mediaControlsDivider} />
+      <button
+        type="button"
+        className={styles.imageDeleteBtn}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onDelete}
+        title="Remove"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 // ─── ImageNode ────────────────────────────────────────────────────────────────
 
 export const INSERT_IMAGE_COMMAND = createCommand('INSERT_IMAGE_COMMAND');
 
-function ImageComponent({ src, altText, nodeKey, editor, width }) {
+function ImageComponent({ src, altText, nodeKey, editor, width, align }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [localWidth, setLocalWidth] = useState(width ?? null);
@@ -137,9 +181,18 @@ function ImageComponent({ src, altText, nodeKey, editor, width }) {
   const isActive = isHovered || isResizing;
   const imgStyle = localWidth ? { width: `${localWidth}px`, height: 'auto' } : {};
 
+  const getAlignClass = () => {
+    switch (align) {
+      case 'left': return styles.mediaAlignLeft;
+      case 'right': return styles.mediaAlignRight;
+      case 'center': return styles.mediaAlignCenter;
+      default: return '';
+    }
+  };
+
   return (
     <div
-      className={`${styles.imageWrapper}${isActive ? ` ${styles.mediaActive}` : ''}`}
+      className={`${styles.imageWrapper} ${getAlignClass()}${isActive ? ` ${styles.mediaActive}` : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => { if (!isResizing) setIsHovered(false); }}
     >
@@ -161,15 +214,12 @@ function ImageComponent({ src, altText, nodeKey, editor, width }) {
             className={`${styles.resizeHandle} ${styles.resizeHandleE}`}
             onMouseDown={startResize('e')}
           />
-          <button
-            type="button"
-            className={styles.imageDeleteBtn}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={handleDelete}
-            title="Remove image"
-          >
-            ✕
-          </button>
+          <MediaControls
+            editor={editor}
+            nodeKey={nodeKey}
+            align={align}
+            onDelete={handleDelete}
+          />
         </>
       )}
     </div>
@@ -178,23 +228,29 @@ function ImageComponent({ src, altText, nodeKey, editor, width }) {
 
 class ImageNode extends DecoratorNode {
   static getType() { return 'image'; }
-  static clone(node) { return new ImageNode(node.__src, node.__altText, node.__width, node.__key); }
+  static clone(node) { return new ImageNode(node.__src, node.__altText, node.__width, node.__align, node.__key); }
 
-  constructor(src, altText = '', width = null, key) {
+  constructor(src, altText = '', width = null, align = 'none', key) {
     super(key);
     this.__src = src;
     this.__altText = altText;
     this.__width = width;
+    this.__align = align;
   }
 
-  static importJSON(s) { return new ImageNode(s.src, s.altText || '', s.width ?? null); }
+  static importJSON(s) { return new ImageNode(s.src, s.altText || '', s.width ?? null, s.align ?? 'none'); }
   exportJSON() {
-    return { type: 'image', version: 1, src: this.__src, altText: this.__altText, width: this.__width };
+    return { type: 'image', version: 1, src: this.__src, altText: this.__altText, width: this.__width, align: this.__align };
   }
 
   setWidth(width) {
     const self = this.getWritable();
     self.__width = width;
+  }
+
+  setAlign(align) {
+    const self = this.getWritable();
+    self.__align = align;
   }
 
   isInline() { return false; }
@@ -208,6 +264,7 @@ class ImageNode extends DecoratorNode {
         nodeKey={this.__key}
         editor={editor}
         width={this.__width}
+        align={this.__align}
       />
     );
   }
@@ -250,7 +307,7 @@ function extractYouTubeId(url) {
   return match ? match[1] : null;
 }
 
-function YouTubeComponent({ videoId, nodeKey, editor, width }) {
+function YouTubeComponent({ videoId, nodeKey, editor, width, align }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [localWidth, setLocalWidth] = useState(width ?? null);
@@ -305,10 +362,27 @@ function YouTubeComponent({ videoId, nodeKey, editor, width }) {
   const isActive = isHovered || isResizing;
   const outerStyle = localWidth ? { width: `${localWidth}px`, maxWidth: '100%' } : {};
 
+  const getAlignClass = () => {
+    switch (align) {
+      case 'left': return styles.mediaAlignLeft;
+      case 'right': return styles.mediaAlignRight;
+      case 'center': return styles.mediaAlignCenter;
+      default: return '';
+    }
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  };
+
   return (
     <div
       ref={wrapperRef}
-      className={`${styles.youtubeResizeWrapper}${isActive ? ` ${styles.mediaActive}` : ''}`}
+      className={`${styles.youtubeResizeWrapper} ${getAlignClass()}${isActive ? ` ${styles.mediaActive}` : ''}`}
       style={outerStyle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => { if (!isResizing) setIsHovered(false); }}
@@ -332,6 +406,12 @@ function YouTubeComponent({ videoId, nodeKey, editor, width }) {
             className={`${styles.resizeHandle} ${styles.resizeHandleE}`}
             onMouseDown={startResize('e')}
           />
+          <MediaControls
+            editor={editor}
+            nodeKey={nodeKey}
+            align={align}
+            onDelete={handleDelete}
+          />
         </>
       )}
     </div>
@@ -340,22 +420,28 @@ function YouTubeComponent({ videoId, nodeKey, editor, width }) {
 
 class YouTubeNode extends DecoratorNode {
   static getType() { return 'youtube'; }
-  static clone(node) { return new YouTubeNode(node.__videoId, node.__width, node.__key); }
+  static clone(node) { return new YouTubeNode(node.__videoId, node.__width, node.__align, node.__key); }
 
-  constructor(videoId, width = null, key) {
+  constructor(videoId, width = null, align = 'none', key) {
     super(key);
     this.__videoId = videoId;
     this.__width = width;
+    this.__align = align;
   }
 
-  static importJSON(s) { return new YouTubeNode(s.videoId, s.width ?? null); }
+  static importJSON(s) { return new YouTubeNode(s.videoId, s.width ?? null, s.align ?? 'none'); }
   exportJSON() {
-    return { type: 'youtube', version: 1, videoId: this.__videoId, width: this.__width };
+    return { type: 'youtube', version: 1, videoId: this.__videoId, width: this.__width, align: this.__align };
   }
 
   setWidth(width) {
     const self = this.getWritable();
     self.__width = width;
+  }
+
+  setAlign(align) {
+    const self = this.getWritable();
+    self.__align = align;
   }
 
   isInline() { return false; }
@@ -369,6 +455,7 @@ class YouTubeNode extends DecoratorNode {
         nodeKey={this.__key}
         editor={editor}
         width={this.__width}
+        align={this.__align}
       />
     );
   }
@@ -395,8 +482,9 @@ function YouTubePlugin() {
 
 export const INSERT_TWEET_COMMAND = createCommand('INSERT_TWEET_COMMAND');
 
-function TweetComponent({ tweetUrl }) {
+function TweetComponent({ tweetUrl, nodeKey, editor, align }) {
   const containerRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -424,35 +512,74 @@ function TweetComponent({ tweetUrl }) {
     }
   }, [tweetUrl]);
 
+  const getAlignClass = () => {
+    switch (align) {
+      case 'left': return styles.mediaAlignLeft;
+      case 'right': return styles.mediaAlignRight;
+      case 'center': return styles.mediaAlignCenter;
+      default: return '';
+    }
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if (node) node.remove();
+    });
+  };
+
+  const isActive = isHovered;
+
   return (
-    <div ref={containerRef} className={styles.tweetWrapper}>
-      <blockquote className="twitter-tweet">
-        <a href={tweetUrl}>{tweetUrl}</a>
-      </blockquote>
+    <div
+      className={`${styles.tweetWrapper} ${getAlignClass()}${isActive ? ` ${styles.mediaActive}` : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div ref={containerRef}>
+        <blockquote className="twitter-tweet">
+          <a href={tweetUrl}>{tweetUrl}</a>
+        </blockquote>
+      </div>
+      {isActive && (
+        <MediaControls
+          editor={editor}
+          nodeKey={nodeKey}
+          align={align}
+          onDelete={handleDelete}
+        />
+      )}
     </div>
   );
 }
 
 class TweetNode extends DecoratorNode {
   static getType() { return 'tweet'; }
-  static clone(node) { return new TweetNode(node.__tweetUrl, node.__key); }
+  static clone(node) { return new TweetNode(node.__tweetUrl, node.__align, node.__key); }
 
-  constructor(tweetUrl, key) {
+  constructor(tweetUrl, align = 'none', key) {
     super(key);
     this.__tweetUrl = tweetUrl;
+    this.__align = align;
   }
 
-  static importJSON(s) { return new TweetNode(s.tweetUrl); }
+  static importJSON(s) { return new TweetNode(s.tweetUrl, s.align ?? 'none'); }
   exportJSON() {
-    return { type: 'tweet', version: 1, tweetUrl: this.__tweetUrl };
+    return { type: 'tweet', version: 1, tweetUrl: this.__tweetUrl, align: this.__align };
+  }
+
+  setAlign(align) {
+    const self = this.getWritable();
+    self.__align = align;
   }
 
   isInline() { return false; }
   createDOM() { return document.createElement('div'); }
   updateDOM() { return false; }
 
-  decorate() {
-    return <TweetComponent tweetUrl={this.__tweetUrl} />;
+  decorate(editor) {
+    return <TweetComponent tweetUrl={this.__tweetUrl} nodeKey={this.__key} editor={editor} align={this.__align} />;
   }
 }
 

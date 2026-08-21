@@ -318,15 +318,12 @@
 }
 
 .imageDeleteBtn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.6);
+  background: transparent;
   color: #fff;
   border: none;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
   font-size: 13px;
   cursor: pointer;
   display: flex;
@@ -334,10 +331,11 @@
   justify-content: center;
   transition: background 0.15s;
   line-height: 1;
+  padding: 0;
 }
 
 .imageDeleteBtn:hover {
-  background: rgba(220, 38, 38, 0.9);
+  background: rgba(220, 38, 38, 0.8);
 }
 
 /* ─── Resize handles (shared by image and YouTube) ───────────────── */
@@ -404,6 +402,84 @@
 .tweetWrapper {
   margin: 12px 0;
   max-width: 550px;
+  position: relative;
+}
+
+/* ─── Media alignment (image / youtube / tweet) ──────────────────── */
+.mediaAlignLeft {
+  float: left;
+  margin: 4px 16px 8px 0;
+  max-width: 50%;
+}
+
+.mediaAlignRight {
+  float: right;
+  margin: 4px 0 8px 16px;
+  max-width: 50%;
+}
+
+.mediaAlignCenter {
+  float: none;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 640px) {
+  .mediaAlignLeft,
+  .mediaAlignRight,
+  .mediaAlignCenter {
+    float: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+/* ─── Media controls overlay ─────────────────────────────────────── */
+.mediaControls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+  padding: 3px;
+  z-index: 10;
+}
+
+.mediaAlignBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  padding: 0;
+}
+
+.mediaAlignBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.mediaAlignBtnActive {
+  background: rgba(255, 255, 255, 0.35);
+  color: #93c5fd;
+}
+
+.mediaControlsDivider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0 2px;
 }
 
 /* ─── Horizontal rule ────────────────────────────────────────────── */
