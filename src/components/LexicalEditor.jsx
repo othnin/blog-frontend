@@ -1009,7 +1009,10 @@ function ToolbarPlugin({ enableFootnotes = true }) {
         capturedSelectionRef.current = null;
       }
     });
-    setFootnoteDialogOpen(true);
+    // Defer dialog opening to avoid focus conflicts with dropdown menu
+    setTimeout(() => {
+      setFootnoteDialogOpen(true);
+    }, 0);
   };
 
   const handleInsertFootnoteSave = (title, body) => {
@@ -1020,8 +1023,8 @@ function ToolbarPlugin({ enableFootnotes = true }) {
           try {
             $setSelection(capturedSelectionRef.current);
           } catch (e) {
-            // If selection restoration fails, just proceed without it
-            console.warn('Failed to restore selection:', e);
+            // If selection restoration fails, position at end of document
+            console.warn('Failed to restore selection, inserting at end:', e);
           }
         }
         $insertNodes([$createFootnoteNode(title, body)]);
@@ -1031,10 +1034,6 @@ function ToolbarPlugin({ enableFootnotes = true }) {
     } finally {
       capturedSelectionRef.current = null;
       setFootnoteDialogOpen(false);
-      // Ensure editor gets focus back after dialog closes
-      setTimeout(() => {
-        editor.focus();
-      }, 0);
     }
   };
 
