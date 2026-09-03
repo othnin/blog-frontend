@@ -7,6 +7,7 @@ import { UserGrowthChart } from '@/components/admin/UserGrowthChart';
 import { PostTrendChart } from '@/components/admin/PostTrendChart';
 import { TopPostsList } from '@/components/admin/TopPostsList';
 import { ActiveUsersChart } from '@/components/admin/ActiveUsersChart';
+import { GlobalSearch } from '@/components/admin/GlobalSearch';
 
 function StatCard({ icon: Icon, label, value, color = 'text-primary' }) {
   return (
@@ -43,8 +44,13 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Dashboard</h1>
-      <p className="text-muted-foreground mb-8">Site overview and key metrics</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Site overview and key metrics</p>
+        </div>
+        <GlobalSearch />
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Users} label="Total Users" value={stats.total_users} />

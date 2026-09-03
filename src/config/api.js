@@ -36,6 +36,7 @@ export const API_ENDPOINTS = {
       topPosts: '/api/admin/analytics/top-posts/',
       activeUsers: '/api/admin/analytics/active-users/',
     },
+    search: '/api/admin/search/',
     users: '/api/admin/users/',
     user: (id) => `/api/admin/users/${id}/`,
     userRole: (id) => `/api/admin/users/${id}/role/`,

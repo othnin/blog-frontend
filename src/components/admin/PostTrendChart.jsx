@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import useSWR from "swr";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,18 @@ import { API_ENDPOINTS } from "@/config/api";
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export function PostTrendChart() {
-  const { data, error, isLoading } = useSWR(API_ENDPOINTS.admin.analytics.postTrend, fetcher);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const endpoint = useMemo(() => {
+    let url = API_ENDPOINTS.admin.analytics.postTrend;
+    if (startDate && endDate) {
+      url += `?start_date=${startDate}&end_date=${endDate}`;
+    }
+    return url;
+  }, [startDate, endDate]);
+
+  const { data, error, isLoading } = useSWR(endpoint, fetcher);
 
   const isError = error;
   const isEmpty = data && data.length === 0;
@@ -20,6 +31,34 @@ export function PostTrendChart() {
       <CardHeader>
         <CardTitle>Publishing Trend</CardTitle>
         <CardDescription>Posts published per month, last 12 months</CardDescription>
+        <div className="flex gap-2 mt-4">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+            placeholder="Start date"
+          />
+          <span className="text-sm text-muted-foreground self-center">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+            placeholder="End date"
+          />
+          {(startDate || endDate) && (
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
