@@ -30,6 +30,12 @@ export const API_ENDPOINTS = {
   },
   admin: {
     dashboard: '/api/admin/dashboard/',
+    analytics: {
+      userGrowth: '/api/admin/analytics/user-growth/',
+      postTrend: '/api/admin/analytics/post-trend/',
+      topPosts: '/api/admin/analytics/top-posts/',
+      activeUsers: '/api/admin/analytics/active-users/',
+    },
     users: '/api/admin/users/',
     user: (id) => `/api/admin/users/${id}/`,
     userRole: (id) => `/api/admin/users/${id}/role/`,

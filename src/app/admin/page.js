@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
-import { Users, FileText, Heart, FolderOpen, Eye, MessageSquare, TrendingUp, BookOpen } from 'lucide-react';
+import { Users, FileText, Heart, FolderOpen, Eye, MessageSquare, TrendingUp, BookOpen, UserPlus } from 'lucide-react';
+import { UserGrowthChart } from '@/components/admin/UserGrowthChart';
+import { PostTrendChart } from '@/components/admin/PostTrendChart';
+import { TopPostsList } from '@/components/admin/TopPostsList';
+import { ActiveUsersChart } from '@/components/admin/ActiveUsersChart';
 
 function StatCard({ icon: Icon, label, value, color = 'text-primary' }) {
   return (
@@ -49,11 +53,27 @@ export default function AdminDashboardPage() {
         <StatCard icon={TrendingUp} label="Drafts" value={stats.draft_posts} color="text-yellow-600" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Eye} label="Total Views" value={stats.total_views} color="text-blue-600" />
         <StatCard icon={Heart} label="Total Likes" value={stats.total_likes} color="text-rose-500" />
         <StatCard icon={MessageSquare} label="Comments" value={stats.total_comments} color="text-violet-600" />
         <StatCard icon={FolderOpen} label="Categories" value={stats.total_categories} color="text-orange-600" />
+      </div>
+
+      <div className="mb-8">
+        <StatCard icon={UserPlus} label="New Users This Month" value={stats.new_users_this_month} color="text-blue-600" />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4 text-foreground">Analytics</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <UserGrowthChart />
+          <PostTrendChart />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TopPostsList />
+          <ActiveUsersChart />
+        </div>
       </div>
     </div>
   );
