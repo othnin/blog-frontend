@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { fetchWithAuth } from '@/lib/tokenUtils';
-import { LayoutDashboard, Users, FileText, ChefHat, FolderOpen, Tag, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, ChefHat, FolderOpen, Tag, Shield, ArrowLeft } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/admin/recipes', label: 'Recipes', icon: ChefHat },
   { href: '/admin/categories', label: 'Categories', icon: FolderOpen },
   { href: '/admin/tags', label: 'Tags', icon: Tag },
+  { href: '/admin/security', label: 'Security', icon: Shield },
 ];
 
 export default function AdminLayout({ children }) {

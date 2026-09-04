@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
     categoryImage: (id) => `/api/admin/categories/${id}/image/`,
     tags: '/api/admin/tags/',
     tag: (id) => `/api/admin/tags/${id}/`,
+    securityEvents: '/api/admin/security-events/',
   },
   recipes: {
     list:          '/api/recipes/',
