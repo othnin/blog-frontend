@@ -83,19 +83,53 @@ function LoginContent() {
   const handleGoogleCredential = async (response) => {
     setError('');
     try {
-      const res = await fetch('/api/auth/google-login', {
+      const res = await fetch(API_ENDPOINTS.auth.googleLogin, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ credential: response.credential }),
       });
       const data = await res.json();
-      if (data.loggedIn) {
+      if (data.status === 'success') {
         auth.login(data.username);
       } else {
         setError(data.message || 'Google login failed. Please try again.');
       }
     } catch {
       setError('Google login failed. Please try again.');
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    setError('');
+    try {
+      if (!window.FB) {
+        setError('Facebook SDK not loaded. Please try again.');
+        return;
+      }
+      window.FB.login((response) => {
+        if (response.authResponse) {
+          fetch(API_ENDPOINTS.auth.facebookLogin, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: response.authResponse.accessToken }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.status === 'success') {
+                auth.login(data.username);
+              } else {
+                setError(data.message || 'Facebook login failed. Please try again.');
+              }
+            })
+            .catch(() => {
+              setError('Facebook login failed. Please try again.');
+            });
+        } else {
+          setError('Facebook login was cancelled. Please try again.');
+        }
+      }, { scope: 'email' });
+    } catch {
+      setError('Facebook login failed. Please try again.');
     }
   };
 
@@ -200,14 +234,24 @@ function LoginContent() {
         </button>
       </form>
 
-      {/* Google Sign-In button */}
+      {/* OAuth Sign-In buttons */}
       <div className="mt-4">
         <div className="relative flex items-center justify-center my-4">
           <div className="border-t border-gray-300 dark:border-gray-600 w-full" />
           <span className="px-3 text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900">or</span>
           <div className="border-t border-gray-300 dark:border-gray-600 w-full" />
         </div>
-        <div id="google-signin-btn" className="flex justify-center" />
+        <div id="google-signin-btn" className="flex justify-center mb-3" />
+        <button
+          type="button"
+          onClick={handleFacebookLogin}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+          </svg>
+          Continue with Facebook
+        </button>
       </div>
 
       <p className="mt-4 text-center text-sm">
@@ -235,6 +279,20 @@ function LoginContent() {
               document.getElementById('google-signin-btn'),
               { theme: 'outline', size: 'large', width: '100%' }
             );
+          }
+        }}
+      />
+
+      <Script
+        src="https://connect.facebook.net/en_US/sdk.js"
+        onLoad={() => {
+          if (window.FB && process.env.NEXT_PUBLIC_FACEBOOK_APP_ID) {
+            window.FB.init({
+              appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+              cookie: true,
+              xfbml: false,
+              version: 'v21.0',
+            });
           }
         }}
       />
