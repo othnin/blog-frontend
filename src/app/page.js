@@ -1,3 +1,5 @@
+import HomepageContent from '@/components/HomepageContent'
+
 // Banner images in /public/banner/.
 // Rotation is deterministic: (year * 12 + month) % BANNERS.length
 // — no cron job required. The image advances automatically on the 1st of each month.
@@ -37,6 +39,7 @@ export default function Home() {
           style={{ display: 'block', maxHeight: '80vh' }}
         />
       </div>
+      <HomepageContent />
     </div>
   );
 }
