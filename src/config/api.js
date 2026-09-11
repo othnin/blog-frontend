@@ -15,7 +15,6 @@ export const API_ENDPOINTS = {
     changePassword: '/api/auth/change-password',
     profile: (username) => `/api/auth/profile/${username}`,
     googleLogin: '/api/auth/google-login',
-    facebookLogin: '/api/auth/facebook-login',
   },
   blog: {
     posts: '/api/blog/posts',
