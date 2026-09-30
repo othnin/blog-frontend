@@ -35,7 +35,7 @@ export default function PrivacyPage() {
 
             <h3 className="text-xl font-semibold mt-4 mb-2">OAuth Data</h3>
             <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>If you log in via Google or Facebook, we receive your verified email address only</li>
+              <li>If you log in via Google, we receive your verified email address only</li>
               <li>We do not receive or store passwords from OAuth providers</li>
               <li>Your OAuth account is linked to your blog account by email address</li>
             </ul>
@@ -81,7 +81,6 @@ export default function PrivacyPage() {
             <p>We use the following third-party services:</p>
             <ul className="list-disc list-inside space-y-2 ml-2">
               <li><strong>Google OAuth</strong> — For optional sign-in via Google (privacy policy: google.com/policies/privacy)</li>
-              <li><strong>Facebook Login</strong> — For optional sign-in via Facebook (privacy policy: facebook.com/privacy)</li>
               <li><strong>Resend</strong> — For email delivery (privacy policy: resend.com/privacy)</li>
               <li><strong>Railway</strong> — For hosting (privacy policy: railway.app/privacy)</li>
             </ul>
