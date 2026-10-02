@@ -374,19 +374,28 @@ export default function BlogDetailPage() {
               <h1 className="text-4xl font-bold mb-4 text-foreground">{post.title}</h1>
 
               <div className="flex flex-wrap items-center gap-4 mb-6 text-muted-foreground">
-                <button
-                  className="flex items-center gap-2 hover:text-foreground transition-colors"
-                  onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
-                >
-                  {post.author.avatar_url ? (
-                    <img src={post.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
-                  ) : (
+                {post.author ? (
+                  <button
+                    className="flex items-center gap-2 hover:text-foreground transition-colors"
+                    onClick={(e) => setProfilePopup({ username: post.author.username, anchorRect: e.currentTarget.getBoundingClientRect() })}
+                  >
+                    {post.author.avatar_url ? (
+                      <img src={post.author.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                    ) : (
+                      <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                        {post.author.username?.[0]?.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="hover:underline">By {post.author.username}</span>
+                  </button>
+                ) : (
+                  <span className="flex items-center gap-2">
                     <span className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                      {post.author.username?.[0]?.toUpperCase()}
+                      ?
                     </span>
-                  )}
-                  <span className="hover:underline">By {post.author.username}</span>
-                </button>
+                    <span>By an anonymous author</span>
+                  </span>
+                )}
                 <span>•</span>
                 <span>{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
                 <span>•</span>

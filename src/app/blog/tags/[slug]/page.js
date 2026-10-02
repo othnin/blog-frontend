@@ -69,7 +69,8 @@ export default function TagFilterPage() {
             >
               <h2 className="text-xl font-bold mb-2 text-foreground">{post.title}</h2>
               <p className="text-sm text-muted-foreground mb-2">
-                By {post.author.username} • {new Date(post.created_at).toLocaleDateString()}
+                {post.author ? `By ${post.author.username}` : 'By an anonymous author'} •{' '}
+                {new Date(post.created_at).toLocaleDateString()}
               </p>
               {post.content_text && (
                 <>

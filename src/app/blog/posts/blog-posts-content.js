@@ -369,9 +369,10 @@ export default function BlogPostsContent() {
                   />
                 )}
               </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                By {post.author.username} • {new Date(post.created_at).toLocaleDateString()}
-              </p>
+<p className="text-sm text-muted-foreground mb-2">
+                    {post.author ? `By ${post.author.username}` : 'By an anonymous author'} •{' '}
+                    {new Date(post.created_at).toLocaleDateString()}
+                  </p>
               {post.content_text && (
                 <>
                   <hr className="border-border mb-3" />

@@ -73,7 +73,7 @@ export default function Footer() {
           {/* Divider */}
           <div className="border-t pt-8">
             <p className="text-xs text-muted-foreground text-center">
-              Monsters Eat Austin - A Blog About Local Food & Culture
+              Monsters Eat Austin - A Blog About Life, the Universe and Everything
             </p>
           </div>
         </div>

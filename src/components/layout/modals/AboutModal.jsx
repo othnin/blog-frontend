@@ -8,11 +8,24 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import PhotoGallery from '@/components/PhotoGallery'
+
+const ABOUT_PHOTOS = [
+  { src: '/art/cubism.png', alt: 'Cubism' },
+  { src: '/art/fearandloathing.png', alt: 'Fear and Loathing' },
+  { src: '/art/impressionism.png', alt: 'Impressionism' },
+  { src: '/art/nixon.jpg', alt: 'Nixon' },
+  { src: '/art/popart.png', alt: 'Pop Art' },
+  { src: '/art/renassance.png', alt: 'Renaissance' },
+  { src: '/art/surrealism.png', alt: 'Surrealism' },
+  { src: '/art/thescream.png', alt: 'The Scream' },
+  { src: '/art/vj_day.png', alt: 'VJ Day' },
+]
 
 export default function AboutModal({ open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Info className="h-5 w-5" />
@@ -23,34 +36,38 @@ export default function AboutModal({ open, onOpenChange }) {
           <div>
             <h3 className="font-semibold text-foreground mb-2">Our Story</h3>
             <p className="text-sm text-muted-foreground">
-              Monsters Eat Austin is a passionate blog dedicated to exploring the vibrant food culture and local dining scene of Austin, Texas. We celebrate the unique flavors, creative chefs, and food establishments that make Austin a premier destination for food enthusiasts.
+              We are a collaborative platform exploring the intersection of science, software, food culture, and innovation. From computational breakthroughs to culinary discoveries, we celebrate the vibrant creative community in Austin across technology, research, and dining.
             </p>
           </div>
-          
+
           <div>
             <h3 className="font-semibold text-foreground mb-2">Our Mission</h3>
             <p className="text-sm text-muted-foreground">
-              We aim to showcase the best culinary experiences Austin has to offer, from food trucks to fine dining, and help our community discover amazing places to eat. Through honest reviews and behind-the-scenes stories, we celebrate the "monsters" of Austin's food scene – the bold creators who are pushing boundaries and delighting our taste buds.
+              We share knowledge and insights that advance understanding in science, software engineering, and local food culture. Through technical deep-dives, interviews, and explorations, we celebrate the bold creators pushing boundaries in tech, research, and culinary arts.
             </p>
           </div>
 
           <div>
             <h3 className="font-semibold text-foreground mb-2">What We Cover</h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Restaurant Reviews & Recommendations</li>
-              <li>• Food Truck Adventures</li>
-              <li>• Local Chef Interviews</li>
-              <li>• Food Events & Festivals</li>
+              <li>• Computational Biology & Bioinformatics</li>
+              <li>• Machine Learning & AI</li>
+              <li>• Software Architecture & Best Practices</li>
+              <li>• Restaurant Reviews & Local Food Culture</li>
               <li>• Recipes & Cooking Tips</li>
-              <li>• Austin Food Culture</li>
+              <li>• Open Source & Food Innovation</li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-foreground mb-2">Join Our Community</h3>
             <p className="text-sm text-muted-foreground">
-              Whether you're a foodie, a casual diner, or someone looking to discover new flavors, we invite you to join our growing community of Austin food lovers. Subscribe to stay updated on the latest posts and food discoveries!
+              Whether you're a researcher, developer, foodie, or curious learner, we invite you to join us. Subscribe to stay updated on insights across science, software, and Austin's vibrant food scene!
             </p>
+          </div>
+
+          <div className="border-t pt-6">
+            <PhotoGallery photos={ABOUT_PHOTOS} title="About Me" />
           </div>
         </div>
       </DialogContent>
