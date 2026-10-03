@@ -1,11 +1,15 @@
 /**
  * Tests for FE-006 to FE-007: Blog pages
- * Covers: BlogPostsPage (/blog/posts/), BlogDetailPage (/blog/[slug]/)
+ * Covers: BlogPostsPage (/blog/posts/), BlogDetailView (/blog/[slug]/)
+ *
+ * /blog/[slug]/page is now an async Server Component that resolves the post and
+ * returns a real 404 via notFound(); it cannot be rendered directly in jsdom.
+ * The UI lives in BlogDetailView, which is what these tests exercise.
  */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import BlogPostsPage from '@/app/blog/posts/page';
-import BlogDetailPage from '@/app/blog/[slug]/page';
+import BlogDetailView from '@/app/blog/[slug]/BlogDetailView';
 import { useRouter, useParams, useSearchParams, usePathname } from 'next/navigation';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -156,18 +160,18 @@ describe('BlogPostsPage', () => {
   });
 });
 
-// ─── BlogDetailPage (FE-007) ──────────────────────────────────────────────────
+// ─── BlogDetailView (FE-007) ──────────────────────────────────────────────────
 
-describe('BlogDetailPage', () => {
+describe('BlogDetailView', () => {
   it('shows loading state while fetching', () => {
     global.fetch.mockImplementation(() => new Promise(() => {}));
-    render(<BlogDetailPage />);
+    render(<BlogDetailView slug="first-post" />);
     expect(screen.getByText(/loading post/i)).toBeInTheDocument();
   });
 
   it('renders post title, author, and content after fetch', async () => {
     global.fetch.mockResolvedValueOnce(ok(SAMPLE_POST));
-    render(<BlogDetailPage />);
+    render(<BlogDetailView slug="first-post" />);
     await waitFor(() =>
       expect(screen.getByText('First Post')).toBeInTheDocument()
     );
@@ -178,7 +182,7 @@ describe('BlogDetailPage', () => {
 
   it('shows back to posts link', async () => {
     global.fetch.mockResolvedValueOnce(ok(SAMPLE_POST));
-    render(<BlogDetailPage />);
+    render(<BlogDetailView slug="first-post" />);
     await waitFor(() =>
       expect(screen.getByText('First Post')).toBeInTheDocument()
     );
@@ -190,7 +194,7 @@ describe('BlogDetailPage', () => {
 
   it('shows error state when fetch fails', async () => {
     global.fetch.mockResolvedValueOnce(fail());
-    render(<BlogDetailPage />);
+    render(<BlogDetailView slug="first-post" />);
     await waitFor(() =>
       expect(screen.getByText(/Error: Post not found/i)).toBeInTheDocument()
     );
@@ -198,7 +202,7 @@ describe('BlogDetailPage', () => {
 
   it('shows back link on error state too', async () => {
     global.fetch.mockResolvedValueOnce(fail());
-    render(<BlogDetailPage />);
+    render(<BlogDetailView slug="first-post" />);
     await waitFor(() =>
       expect(screen.getByRole('link', { name: /back to posts/i })).toBeInTheDocument()
     );
