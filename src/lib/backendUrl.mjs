@@ -60,10 +60,23 @@ export function requireDjangoBaseUrl(options = {}) {
   const isBuild = options.phase === 'phase-production-build';
   if (!isBuild && process.env.NODE_ENV === 'production') {
     throw new Error(
-      'DJANGO_BASE_URL is not set. The frontend proxies /api/* to Django, so it ' +
-        'has to know where Django runs. Set DJANGO_BASE_URL (for example ' +
-        'http://localhost:8001 locally, or your Railway backend URL in ' +
-        'production) and restart.',
+      'DJANGO_BASE_URL is not set on the FRONTEND service.\n' +
+        '\n' +
+        'The frontend proxies /api/* to Django, so it has to know where Django ' +
+        'runs. Left unset, every /api request would be proxied to 127.0.0.1:8001 ' +
+        'inside the frontend container, where nothing is listening.\n' +
+        '\n' +
+        'Set it on the frontend service, not the backend:\n' +
+        '  local:    http://localhost:8001\n' +
+        '  Railway:  https://${{blog-backend.RAILWAY_PUBLIC_DOMAIN}}\n' +
+        '\n' +
+        'Prefer the backend PUBLIC domain over http://blog-backend:8080. Plain ' +
+        'HTTP to the internal port makes SSLRedirectMiddleware 301 to an ' +
+        'https:// URL that nothing serves, unless X-Forwarded-Proto survives ' +
+        'the hop.\n' +
+        '\n' +
+        'This gate runs at serve time only, so the build stays green either way ' +
+        '- a missing value shows up as a build that passes and then crash-loops.',
     );
   }
 
