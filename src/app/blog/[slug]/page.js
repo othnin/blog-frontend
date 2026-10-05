@@ -1,11 +1,8 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import BlogDetailView from './BlogDetailView';
+import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
 
-const DJANGO_BASE_URL =
-  process.env.DJANGO_BASE_URL ||
-  process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-  'http://127.0.0.1:8001';
 
 const AUTH_COOKIE = 'auth-token';
 
@@ -28,11 +25,12 @@ export const dynamic = 'force-dynamic';
 export default async function BlogPostPage({ params }) {
   const { slug } = await params;
 
+  const djangoBaseUrl = getDjangoBaseUrl();
   const token = (await cookies()).get(AUTH_COOKIE)?.value;
 
   // Deliberately unauthenticated, mirroring the original browser-side fetch:
   // the public detail endpoint returns published posts only.
-  const publicRes = await fetch(`${DJANGO_BASE_URL}/api/blog/posts/${slug}`, {
+  const publicRes = await fetch(`${djangoBaseUrl}/api/blog/posts/${slug}`, {
     cache: 'no-store',
   });
 
@@ -42,7 +40,7 @@ export default async function BlogPostPage({ params }) {
 
   if (publicRes.status === 404) {
     if (token) {
-      const mineRes = await fetch(`${DJANGO_BASE_URL}/api/blog/my-posts`, {
+      const mineRes = await fetch(`${djangoBaseUrl}/api/blog/my-posts`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       });

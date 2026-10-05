@@ -1,5 +1,5 @@
-const DJANGO_BASE_URL = process.env.NEXT_PUBLIC_DJANGO_BASE_URL || process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';
-
+import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
+const DJANGO_BASE_URL = getDjangoBaseUrl();
 export async function POST(request, { params }) {
   const { slug } = await params;
 

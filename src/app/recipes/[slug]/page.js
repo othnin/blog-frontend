@@ -1,11 +1,8 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import RecipeDetailView from './RecipeDetailView';
+import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
 
-const DJANGO_BASE_URL =
-  process.env.DJANGO_BASE_URL ||
-  process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-  'http://127.0.0.1:8001';
 
 const AUTH_COOKIE = 'auth-token';
 
@@ -23,9 +20,10 @@ export const dynamic = 'force-dynamic';
 export default async function RecipePage({ params }) {
   const { slug } = await params;
 
+  const djangoBaseUrl = getDjangoBaseUrl();
   const token = (await cookies()).get(AUTH_COOKIE)?.value;
 
-  const publicRes = await fetch(`${DJANGO_BASE_URL}/api/recipes/${slug}/`, {
+  const publicRes = await fetch(`${djangoBaseUrl}/api/recipes/${slug}/`, {
     cache: 'no-store',
   });
 
@@ -35,7 +33,7 @@ export default async function RecipePage({ params }) {
 
   if (publicRes.status === 404) {
     if (token) {
-      const mineRes = await fetch(`${DJANGO_BASE_URL}/api/recipes/my-recipes/`, {
+      const mineRes = await fetch(`${djangoBaseUrl}/api/recipes/my-recipes/`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       });

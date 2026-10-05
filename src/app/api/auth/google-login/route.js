@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server'
 import { setToken, setRefreshToken } from '@/lib/auth'
+import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
 
-const DJANGO_URL =
-  process.env.NEXT_PUBLIC_DJANGO_BASE_URL ||
-  process.env.DJANGO_BASE_URL ||
-  'http://127.0.0.1:8001'
-
+const DJANGO_URL = getDjangoBaseUrl();
 export async function POST(request) {
   try {
     const { credential } = await request.json()
