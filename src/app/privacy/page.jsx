@@ -55,7 +55,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mt-8 mb-4">What We Don't Do</h2>
+            <h2 className="text-2xl font-bold mt-8 mb-4">What We Don&apos;t Do</h2>
             <ul className="list-disc list-inside space-y-2 ml-2">
               <li>❌ We do not sell, rent, or share your personal data with third parties</li>
               <li>❌ We do not use cookies for tracking or advertising</li>

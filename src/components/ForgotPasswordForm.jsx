@@ -64,7 +64,7 @@ export default function ForgotPasswordForm() {
       <div className="max-w-md mx-auto p-6 bg-card rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6 text-foreground">Check Your Email</h1>
         <div className="p-4 bg-blue-100 text-blue-700 rounded mb-4">
-          If an account exists with that email, we've sent password reset instructions.
+          If an account exists with that email, we&apos;ve sent password reset instructions.
         </div>
         <p className="text-gray-600 mb-4">
           Check your email for a link to reset your password. The link expires in 24 hours.
@@ -90,7 +90,7 @@ export default function ForgotPasswordForm() {
       )}
 
       <p className="mb-4 text-gray-600">
-        Enter your email address and we'll send you a link to reset your password.
+        Enter your email address and we&apos;ll send you a link to reset your password.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">

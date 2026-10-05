@@ -35,7 +35,7 @@ export default function ContactModal({ open, onOpenChange }) {
 
           <div className="border-t pt-4">
             <p className="text-xs text-muted-foreground">
-              We'd love to hear from you! Reach out for collaboration inquiries, recipe suggestions, or just to say hello.
+              We&apos;d love to hear from you! Reach out for collaboration inquiries, recipe suggestions, or just to say hello.
             </p>
           </div>
         </div>

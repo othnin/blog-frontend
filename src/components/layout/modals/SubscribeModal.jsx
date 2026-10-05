@@ -46,7 +46,7 @@ export default function SubscribeModal({ open, onOpenChange }) {
             Subscribe to Our Blog
           </DialogTitle>
           <DialogDescription>
-            Get the latest posts delivered to your inbox. No spam, just great content about Austin's food scene.
+            Get the latest posts delivered to your inbox. No spam, just great content about Austin&apos;s food scene.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4 opacity-50 pointer-events-none">

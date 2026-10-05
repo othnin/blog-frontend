@@ -34,7 +34,7 @@ export default function CopyrightModal({ open, onOpenChange }) {
           <div>
             <h3 className="font-semibold text-foreground mb-2">Intellectual Property</h3>
             <p className="text-sm text-muted-foreground">
-              All trademarks, logos, and brand names mentioned on this website are the property of their respective owners. The "Monsters Eat Austin" name and logo are exclusive trademarks of this publication.
+              All trademarks, logos, and brand names mentioned on this website are the property of their respective owners. The &quot;Monsters Eat Austin&quot; name and logo are exclusive trademarks of this publication.
             </p>
           </div>
 

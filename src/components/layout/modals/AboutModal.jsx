@@ -62,7 +62,7 @@ export default function AboutModal({ open, onOpenChange }) {
           <div>
             <h3 className="font-semibold text-foreground mb-2">Join Our Community</h3>
             <p className="text-sm text-muted-foreground">
-              Whether you're a researcher, developer, foodie, or curious learner, we invite you to join us. Subscribe to stay updated on insights across science, software, and Austin's vibrant food scene!
+              Whether you&apos;re a researcher, developer, foodie, or curious learner, we invite you to join us. Subscribe to stay updated on insights across science, software, and Austin&apos;s vibrant food scene!
             </p>
           </div>
 

@@ -138,6 +138,10 @@ export default function GlobalError({ error, reset }) {
             <button type="button" className="ge-btn ge-btn-primary" onClick={reset}>
               Reload page
             </button>
+            {/* Plain anchor, not <Link>: this is the global error boundary, so
+                the client router may itself be the thing that is broken. A full
+                document navigation is the one recovery path that still works. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a className="ge-btn ge-btn-outline" href="/">
               Go home
             </a>

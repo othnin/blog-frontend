@@ -489,7 +489,7 @@ export default function BlogDetailView({ slug, initialPost = null }) {
             <h2 className="text-lg font-semibold text-foreground mb-2">Delete Post</h2>
             <p className="text-muted-foreground text-sm mb-6">
               Are you sure you want to delete{' '}
-              <span className="font-medium text-foreground">"{post.title}"</span>? This cannot be undone.
+              <span className="font-medium text-foreground">&quot;{post.title}&quot;</span>? This cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
