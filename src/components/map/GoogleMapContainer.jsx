@@ -17,8 +17,8 @@ function getMarkerIcon() {
   if (typeof window !== 'undefined' && window.google?.maps) {
     return {
       url: MARKER_ICON_URL,
-      scaledSize: new window.google.maps.Size(32, 32),
-      anchor: new window.google.maps.Point(16, 30),
+      scaledSize: new window.google.maps.Size(40, 40),
+      anchor: new window.google.maps.Point(20, 38),
     };
   }
   return MARKER_ICON_URL;
