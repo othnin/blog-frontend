@@ -10,6 +10,7 @@ import AccountDropdown from "./AccountDropdown"
 import CategoryDropdown from "./CategoryDropdown"
 import BlogDropdown from "./BlogDropdown"
 import RecipeDropdown from "./RecipeDropdown"
+import MapDropdown from "./MapDropdown"
 import { Search, CircleUser } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +55,8 @@ export default function Navbar({className}) {
                     <BlogDropdown />
 
                     <RecipeDropdown />
+
+                    <MapDropdown />
                 </div>
                 
                 {/* Middle section: Search */}

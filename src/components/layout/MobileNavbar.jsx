@@ -44,6 +44,9 @@ export default function MobileNavbar({className}) {
         <Link href="/recipes" className="text-muted-foreground hover:text-foreground">
           All Recipes
         </Link>
+        <Link href="/map" className="text-muted-foreground hover:text-foreground">
+          Restaurant Map
+        </Link>
         {auth.isAuthenticated && (
           <Link href="/dashboard/create-recipe" className="text-muted-foreground hover:text-foreground">
             Add Recipe

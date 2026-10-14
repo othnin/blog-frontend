@@ -190,8 +190,21 @@ function CommentNode({
   );
 }
 
-export default function CommentThread({ postId, commentsDisabled = false }) {
+export default function CommentThread({
+  postId,
+  commentsDisabled = false,
+  commentsDisabledMessage = 'Comments are disabled on this post.',
+  endpoints,
+}) {
   const { isAuthenticated, username, avatar } = useAuth();
+
+  // Endpoint resolution: blog post comments by default; callers may pass an
+  // `endpoints` object ({ list, create, update, delete }) to reuse this thread
+  // for recipes, locations, or any other commentable entity.
+  const listUrl = endpoints?.list ?? (postId ? API_ENDPOINTS.blog.comments(postId) : null);
+  const createUrl = endpoints?.create ?? listUrl;
+  const updateUrl = endpoints?.update ?? API_ENDPOINTS.blog.comment;
+  const deleteUrl = endpoints?.delete ?? API_ENDPOINTS.blog.comment;
 
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -221,9 +234,9 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
   }, [isAuthenticated]);
 
   const fetchComments = useCallback(() => {
-    if (!postId) return;
+    if (!listUrl) return;
     setError(null);
-    fetch(API_ENDPOINTS.blog.comments(postId))
+    fetch(listUrl)
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load comments');
         return r.json();
@@ -231,7 +244,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
       .then((data) => setComments(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [postId]);
+  }, [listUrl]);
 
   useEffect(() => {
     fetchComments();
@@ -245,7 +258,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comments(postId), {
+      const res = await fetchWithAuth(createUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_json: contentJson }),
@@ -268,7 +281,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comments(postId), {
+      const res = await fetchWithAuth(createUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_json: contentJson, parent_id: parentId }),
@@ -293,7 +306,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comment(commentId), {
+      const res = await fetchWithAuth(updateUrl(commentId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_json: contentJson }),
@@ -316,7 +329,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetchWithAuth(API_ENDPOINTS.blog.comment(commentId), {
+      const res = await fetchWithAuth(deleteUrl(commentId), {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -347,7 +360,7 @@ export default function CommentThread({ postId, commentsDisabled = false }) {
     return (
       <div className="mt-2">
         <h2 className="text-xl font-semibold text-foreground mb-3">Comments</h2>
-        <p className="text-sm text-muted-foreground italic">Comments are disabled on this post.</p>
+        <p className="text-sm text-muted-foreground italic">{commentsDisabledMessage}</p>
       </div>
     );
   }

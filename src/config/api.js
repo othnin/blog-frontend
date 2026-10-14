@@ -69,4 +69,15 @@ export const API_ENDPOINTS = {
     comment:       (id) => `/api/recipes/comments/${id}/`,
     dietaryLabels: '/api/recipes/dietary-labels/',
   },
+  locations: {
+    list:          '/api/locations/',
+    manage:        '/api/locations/manage/',
+    detail:        (id) => `/api/locations/${id}/`,
+    geocode:       '/api/locations/geocode/',
+    picture:       (id) => `/api/locations/${id}/picture/`,
+    comments:      (id) => `/api/locations/${id}/comments/`,
+    comment:       (id) => `/api/locations/comments/${id}/`,
+    restaurants:   '/api/restaurants/',
+    restaurant:    (id) => `/api/restaurants/${id}/`,
+  },
 };

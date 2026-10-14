@@ -1,7 +1,6 @@
 import { getToken } from '@/lib/auth';
 import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
 
-const DJANGO_BASE_URL = getDjangoBaseUrl();
 async function proxy(request, { params }) {
   const token = await getToken();
 
@@ -15,7 +14,8 @@ async function proxy(request, { params }) {
   const { path } = await params;
   const { searchParams } = new URL(request.url);
 
-  const url = new URL(`${DJANGO_BASE_URL}/api/admin/${path.join('/')}/`);
+  const base = getDjangoBaseUrl();
+  const url = new URL(`${base}/api/admin/${path.join('/')}/`);
   searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
   const reqContentType = request.headers.get('content-type');
@@ -53,7 +53,7 @@ async function proxy(request, { params }) {
     return new Response(
       JSON.stringify({
         detail: isConnRefused
-          ? `Cannot reach backend at ${DJANGO_BASE_URL} — is Django running on port 8001?`
+          ? `Cannot reach backend at ${getDjangoBaseUrl()} — is Django running on port 8001?`
           : `Proxy error: ${err.message}`,
       }),
       { status: 502, headers: { 'Content-Type': 'application/json' } }
