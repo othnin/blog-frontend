@@ -1,13 +1,13 @@
 /**
  * Tests for LOC features (frontend): map browsing, rating filter, restaurant
- * modal, location create/edit form, and the dashboard locations manager.
+ * modal, location create/edit form, and the home locations manager.
  */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MapPage from '@/app/map/page';
-import LocationsDashboardPage from '@/app/dashboard/locations/page';
+import LocationsDashboardPage from '@/app/home/locations/page';
 import LocationForm from '@/components/locations/LocationForm';
 import RatingFilter from '@/components/map/RatingFilter';
 import RestaurantModal from '@/components/map/RestaurantModal';

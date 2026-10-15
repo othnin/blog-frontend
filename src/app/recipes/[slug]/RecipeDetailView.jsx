@@ -248,7 +248,7 @@ export default function RecipeDetailView({ slug, initialRecipe = null }) {
           {canEdit && (
             <>
               <Link
-                href={`/dashboard/edit-recipe/${recipe.id}`}
+                href={`/home/edit-recipe/${recipe.id}`}
                 className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
               >
                 Edit

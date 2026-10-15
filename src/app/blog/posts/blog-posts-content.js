@@ -235,7 +235,7 @@ export default function BlogPostsContent() {
               {showMyPosts ? 'All Posts' : 'My Posts'}
             </button>
             <Link
-              href="/dashboard/create-post"
+              href="/home/create-post"
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
             >
               Create Post
@@ -312,7 +312,7 @@ export default function BlogPostsContent() {
             {myPosts.map((post) => (
               <Link
                 key={post.id}
-                href={post.status === 'published' ? `/blog/${post.slug}` : `/dashboard/edit/${post.id}`}
+                href={post.status === 'published' ? `/blog/${post.slug}` : `/home/edit/${post.id}`}
                 className="block p-6 border rounded-lg bg-card hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">

@@ -38,7 +38,7 @@ jest.mock('next-themes', () => ({
 
 // ─── FE-010: Create Post Page Tests ─────────────────────────────────────────────
 
-describe('FE-010: Create Post Page (/dashboard/create-post)', () => {
+describe('FE-010: Create Post Page (/home/create-post)', () => {
   it('renders create post button', () => {
     // Component would render a button to open modal
     const TestComponent = () => (

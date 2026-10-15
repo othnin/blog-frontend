@@ -93,7 +93,7 @@ export default function CreatePostPage() {
       if (newPost.status === 'published') {
         router.push(`/blog/${newPost.slug}`);
       } else {
-        router.push(`/dashboard/edit/${newPost.id}`);
+        router.push(`/home/edit/${newPost.id}`);
       }
     } catch (err) {
       setError(err.message);

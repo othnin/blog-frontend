@@ -176,7 +176,7 @@ export default function BlogDetailView({ slug, initialPost = null }) {
 
       if (updated.status !== 'published') {
         // Non-published posts are invisible to the public API — go to the edit page
-        router.replace(`/dashboard/edit/${updated.id}`);
+        router.replace(`/home/edit/${updated.id}`);
       } else if (updated.slug !== slug) {
         // Published but slug changed (title edited) — follow to the new URL
         router.replace(`/blog/${updated.slug}`);

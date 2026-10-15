@@ -118,7 +118,7 @@ function RecipeListContent() {
         </div>
         {(userRole === 'editor' || userRole === 'admin') && (
           <Link
-            href="/dashboard/create-recipe"
+            href="/home/create-recipe"
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm"
           >
             + New Recipe

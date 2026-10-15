@@ -1,0 +1,37 @@
+import { getToken } from '@/lib/auth';
+import { getDjangoBaseUrl } from '@/lib/backendUrl.mjs';
+
+const DJANGO_BASE_URL = getDjangoBaseUrl();
+
+export async function GET(request) {
+  const token = await getToken();
+
+  if (!token) {
+    return new Response(JSON.stringify({ detail: 'Not authenticated' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const limit = new URL(request.url).searchParams.get('limit');
+  const qs = limit ? `?limit=${encodeURIComponent(limit)}` : '';
+
+  try {
+    const response = await fetch(`${DJANGO_BASE_URL}/api/auth/activity${qs}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.text();
+    return new Response(data, {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ detail: 'Failed to reach backend' }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}

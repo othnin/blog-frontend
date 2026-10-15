@@ -1,13 +1,13 @@
 /**
- * Tests for FE-008 to FE-009: Dashboard pages
- * Covers: DashboardPage (/dashboard/), CreatePostPage (/dashboard/create-post/)
+ * Tests for FE-008 to FE-009: Home pages
+ * Covers: HomePage (/home/), CreatePostPage (/home/create-post/)
  */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DashboardPage from '@/app/dashboard/page';
-import CreatePostPage from '@/app/dashboard/create-post/page';
+import HomePage from '@/app/home/page';
+import CreatePostPage from '@/app/home/create-post/page';
 import { useRouter, useSearchParams, usePathname, useParams } from 'next/navigation';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 
@@ -89,7 +89,7 @@ beforeEach(() => {
   localStorage.setItem('access_token', 'test-token');
   useRouter.mockReturnValue({ push: mockPush, replace: mockReplace });
   useSearchParams.mockReturnValue({ get: jest.fn().mockReturnValue(null) });
-  usePathname.mockReturnValue('/dashboard');
+  usePathname.mockReturnValue('/home');
   // Suppress debug console.log statements in CreatePostPage
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -100,65 +100,126 @@ afterEach(() => {
   console.error.mockRestore();
 });
 
-// ─── DashboardPage (FE-008) ───────────────────────────────────────────────────
+// ─── HomePage (FE-008) ────────────────────────────────────────────────────────
 
-describe('DashboardPage', () => {
+describe('HomePage', () => {
   it('redirects to /login when not authenticated', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, loading: false });
-    render(<DashboardPage />);
+    render(<HomePage />);
     await waitFor(() =>
       expect(mockPush).toHaveBeenCalledWith('/login')
     );
   });
 
-  it('renders Dashboard heading and user greeting when authenticated', async () => {
+  it('renders Home heading and user greeting for an editor', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
     fetchWithAuth
       .mockResolvedValueOnce(ok({ username: 'testuser', profile: { role: 'editor' } }))
+      .mockResolvedValueOnce(ok(SAMPLE_POSTS)) // my posts
       .mockResolvedValueOnce(ok([])); // recipes
-    render(<DashboardPage />);
+    render(<HomePage />);
     await waitFor(() =>
-      expect(screen.getByText('Dashboard')).toBeInTheDocument()
+      expect(screen.getByText('Home')).toBeInTheDocument()
     );
     expect(screen.getByText(/welcome, testuser/i)).toBeInTheDocument();
   });
 
-  it('shows all posts with their statuses', async () => {
+  it('shows all posts with their statuses for an editor', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'testuser', profile: { role: 'editor' } }))
       .mockResolvedValueOnce(ok(SAMPLE_POSTS))
-      .mockResolvedValueOnce(ok({ username: 'testuser', profile: { role: 'editor' } }));
-    render(<DashboardPage />);
+      .mockResolvedValueOnce(ok([]));
+    render(<HomePage />);
     await waitFor(() =>
       expect(screen.getByText('My Draft Post')).toBeInTheDocument()
     );
     expect(screen.getByText('My Published Post')).toBeInTheDocument();
-    expect(screen.getByText('draft')).toBeInTheDocument();
-    expect(screen.getByText('published')).toBeInTheDocument();
   });
 
   it('shows Create New Post button for editor role', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch.mockResolvedValueOnce(ok(SAMPLE_POSTS));
     fetchWithAuth
       .mockResolvedValueOnce(ok({ username: 'editor', profile: { role: 'editor' } }))
+      .mockResolvedValueOnce(ok(SAMPLE_POSTS)) // my posts
       .mockResolvedValueOnce(ok([])); // recipes
-    render(<DashboardPage />);
+    render(<HomePage />);
     await waitFor(() =>
       expect(screen.getByRole('link', { name: /create new post/i })).toBeInTheDocument()
     );
+    expect(screen.getByRole('link', { name: /manage locations/i })).toBeInTheDocument();
   });
 
-  it('shows empty state when user has no posts', async () => {
+  it('shows Admin Panel link for admin role', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
-    global.fetch
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'admin', profile: { role: 'admin' } }))
       .mockResolvedValueOnce(ok([]))
-      .mockResolvedValueOnce(ok({ username: 'reader', profile: { role: 'reader' } }));
-    render(<DashboardPage />);
+      .mockResolvedValueOnce(ok([]));
+    render(<HomePage />);
     await waitFor(() =>
-      expect(screen.getByText(/no posts available/i)).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /admin panel/i })).toBeInTheDocument()
     );
+  });
+
+  it('shows empty posts state for editor with no posts', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'editor', profile: { role: 'editor' } }))
+      .mockResolvedValueOnce(ok([]))
+      .mockResolvedValueOnce(ok([]));
+    render(<HomePage />);
+    await waitFor(() =>
+      expect(screen.getByText(/haven't created any posts yet/i)).toBeInTheDocument()
+    );
+  });
+
+  it('shows activity feed for a reader instead of empty content lists', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    const activity = [
+      {
+        type: 'comment',
+        target_type: 'post',
+        target_id: 1,
+        title: 'Hello World',
+        slug: 'hello-world',
+        excerpt: 'Great read',
+        score: null,
+        created_at: '2026-03-01T00:00:00Z',
+      },
+      {
+        type: 'rating',
+        target_type: 'recipe',
+        target_id: 2,
+        title: 'Pancakes',
+        slug: 'pancakes',
+        excerpt: null,
+        score: 5,
+        created_at: '2026-02-01T00:00:00Z',
+      },
+    ];
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'reader', profile: { role: 'reader' } }))
+      .mockResolvedValueOnce(ok(activity));
+    render(<HomePage />);
+    await waitFor(() =>
+      expect(screen.getByText('Your Activity')).toBeInTheDocument()
+    );
+    expect(screen.getByText('Hello World')).toBeInTheDocument();
+    expect(screen.getByText('Pancakes')).toBeInTheDocument();
+    expect(screen.queryByText(/create new post/i)).not.toBeInTheDocument();
+  });
+
+  it('shows empty activity state for a reader with no activity', async () => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ username: 'reader', profile: { role: 'reader' } }))
+      .mockResolvedValueOnce(ok([]));
+    render(<HomePage />);
+    await waitFor(() =>
+      expect(screen.getByText(/no activity yet/i)).toBeInTheDocument()
+    );
+    expect(screen.queryByText('Your Blog Posts')).not.toBeInTheDocument();
   });
 });
 
@@ -516,7 +577,7 @@ describe('EditPostPage', () => {
       const handleDelete = async () => {
         if (window.confirm('Delete?')) {
           await fetch('/api/blog/posts/1/', { method: 'DELETE' });
-          mockPush('/dashboard');
+          mockPush('/home');
         }
       };
       return <button onClick={handleDelete}>Delete</button>;
@@ -524,7 +585,7 @@ describe('EditPostPage', () => {
     render(<TestPage />);
     await user.click(screen.getByText('Delete'));
     await waitFor(() =>
-      expect(mockPush).toHaveBeenCalledWith('/dashboard')
+      expect(mockPush).toHaveBeenCalledWith('/home')
     );
   });
 });

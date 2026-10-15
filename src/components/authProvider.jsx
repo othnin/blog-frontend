@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [avatar, setAvatar] = useState(null);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -51,6 +52,7 @@ export function AuthProvider({ children }) {
         if (data) {
           const raw = data.profile?.avatar || null;
           setAvatar(raw);
+          setRole(data.profile?.role ?? null);
         }
       })
       .catch(() => {});
@@ -58,6 +60,7 @@ export function AuthProvider({ children }) {
 
   const login = (username) => {
     setIsAuthenticated(true);
+    setRole(null);
     localStorage.setItem(LOCAL_STORAGE_KEY, '1');
     if (username) {
       localStorage.setItem(LOCAL_USERNAME_KEY, `${username}`);
@@ -80,6 +83,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setIsAuthenticated(false);
+    setRole(null);
     localStorage.setItem(LOCAL_STORAGE_KEY, '0');
     router.replace(LOGOUT_REDIRECT_URL);
   };
@@ -87,6 +91,7 @@ export function AuthProvider({ children }) {
   const loginRequiredRedirect = () => {
     // user is not logged in via API
     setIsAuthenticated(false);
+    setRole(null);
     localStorage.setItem(LOCAL_STORAGE_KEY, '0');
     let loginWithNextUrl = `${LOGIN_REQUIRED_URL}?next=${pathname}`;
     if (LOGIN_REQUIRED_URL === pathname) {
@@ -105,6 +110,7 @@ export function AuthProvider({ children }) {
         username,
         avatar,
         setAvatar,
+        role,
         loading,
       }}
     >

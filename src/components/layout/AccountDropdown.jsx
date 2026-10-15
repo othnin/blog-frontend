@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CircleUser, User } from "lucide-react"
+import { CircleUser, Home, Settings, Shield, LogOut } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,10 +38,23 @@ export default function AccountDropdown() {
                 <DropdownMenuContent align="end">
                     <DropdownMenuLabel>{auth.username ? auth.username : "Account"}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/home')}>
+                        <Home className="h-4 w-4 mr-2" />
+                        Home
+                    </DropdownMenuItem>
+                    {auth.role === 'admin' && (
+                        <DropdownMenuItem onClick={() => router.push('/admin')}>
+                            <Shield className="h-4 w-4 mr-2" />
+                            Admin
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                        <Settings className="h-4 w-4 mr-2" />
                         Settings
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => router.push('/logout')}>
+                        <LogOut className="h-4 w-4 mr-2" />
                         Logout
                     </DropdownMenuItem>
                 </DropdownMenuContent>

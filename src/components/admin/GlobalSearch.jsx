@@ -136,7 +136,7 @@ function getResultLink(result) {
     case "user":
       return `/admin/users?id=${result.id}`;
     case "post":
-      return `/dashboard/edit/${result.id}`;
+      return `/home/edit/${result.id}`;
     case "comment":
       return `/blog/${result.post_id}#comment-${result.id}`;
     default:

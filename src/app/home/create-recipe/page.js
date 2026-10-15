@@ -52,7 +52,7 @@ export default function CreateRecipePage() {
       if (recipe.status === 'published') {
         router.push(`/recipes/${recipe.slug}`);
       } else {
-        router.push(`/dashboard/edit-recipe/${recipe.id}`);
+        router.push(`/home/edit-recipe/${recipe.id}`);
       }
     } catch (err) {
       setError(err.message || 'An error occurred');
@@ -76,7 +76,7 @@ export default function CreateRecipePage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard/recipes" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/home/recipes" className="text-sm text-muted-foreground hover:text-foreground">
           ← My Recipes
         </Link>
         <h1 className="text-3xl font-bold text-foreground">New Recipe</h1>

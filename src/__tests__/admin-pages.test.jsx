@@ -95,18 +95,18 @@ describe('AdminLayout', () => {
     await waitFor(() => expect(screen.getByText('children')).toBeInTheDocument());
   });
 
-  it('redirects to /dashboard if not admin', async () => {
+  it('redirects to /home if not admin', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
     fetchWithAuth.mockResolvedValueOnce(ok({ profile: { role: 'reader' } }));
     render(<AdminLayout>children</AdminLayout>);
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard'));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/home'));
   });
 
-  it('redirects to /dashboard on error fetching profile', async () => {
+  it('redirects to /home on error fetching profile', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, loading: false });
     fetchWithAuth.mockResolvedValueOnce(fail());
     render(<AdminLayout>children</AdminLayout>);
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard'));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/home'));
   });
 });
 describe('AdminDashboardPage', () => {

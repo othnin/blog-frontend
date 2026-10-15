@@ -71,7 +71,7 @@ export default function MyRecipesPage() {
         </div>
         {(userRole === 'editor' || userRole === 'admin') && (
           <Link
-            href="/dashboard/create-recipe"
+            href="/home/create-recipe"
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium text-sm"
           >
             + New Recipe
@@ -88,7 +88,7 @@ export default function MyRecipesPage() {
           <ChefHat className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>No recipes yet.</p>
           {(userRole === 'editor' || userRole === 'admin') && (
-            <Link href="/dashboard/create-recipe" className="mt-3 inline-block text-primary hover:underline text-sm">
+            <Link href="/home/create-recipe" className="mt-3 inline-block text-primary hover:underline text-sm">
               Create your first recipe
             </Link>
           )}
@@ -145,7 +145,7 @@ export default function MyRecipesPage() {
               </div>
               <div className="flex gap-2 flex-shrink-0 ml-3">
                 <Link
-                  href={`/dashboard/edit-recipe/${recipe.id}`}
+                  href={`/home/edit-recipe/${recipe.id}`}
                   className="px-3 py-1 text-sm bg-secondary text-secondary-foreground rounded hover:bg-secondary/80"
                 >
                   Edit

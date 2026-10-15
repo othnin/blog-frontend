@@ -52,7 +52,7 @@ export default function BlogDropdown() {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/create-post">
+              <Link href="/home/create-post">
                 <PenSquare className="h-4 w-4 mr-2" />
                 Create Post
               </Link>

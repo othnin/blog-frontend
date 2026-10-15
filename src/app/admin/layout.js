@@ -35,9 +35,9 @@ export default function AdminLayout({ children }) {
       .then((data) => {
         const userRole = data?.profile?.role;
         setRole(userRole);
-        if (userRole !== 'admin') router.push('/dashboard');
+        if (userRole !== 'admin') router.push('/home');
       })
-      .catch(() => router.push('/dashboard'))
+      .catch(() => router.push('/home'))
       .finally(() => setRoleLoading(false));
   }, [isAuthenticated, loading, router]);
 
@@ -80,7 +80,7 @@ export default function AdminLayout({ children }) {
 
         <div className="mt-4 pt-4 border-t">
           <Link
-            href="/dashboard"
+            href="/home"
             className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

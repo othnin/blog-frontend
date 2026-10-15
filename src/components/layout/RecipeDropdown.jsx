@@ -52,7 +52,7 @@ export default function RecipeDropdown() {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/create-recipe">
+              <Link href="/home/create-recipe">
                 <ChefHat className="h-4 w-4 mr-2" />
                 Add Recipe
               </Link>

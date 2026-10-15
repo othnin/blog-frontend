@@ -1,5 +1,5 @@
 // Michelin rating vocabulary shared by the map filter, marker modal, and the
-// dashboard location form. Values must match the backend
+// home location form. Values must match the backend
 // RestaurantLocation.MICHELIN_RATING_CHOICES.
 
 export const MICHELIN_RATINGS = [

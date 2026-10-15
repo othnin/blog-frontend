@@ -51,7 +51,7 @@ export default function EditRecipePage() {
       if (updated.status === 'published') {
         router.push(`/recipes/${updated.slug}`);
       } else {
-        router.push('/dashboard/recipes');
+        router.push('/home/recipes');
       }
     } catch {
       setError('An error occurred');
@@ -68,7 +68,7 @@ export default function EditRecipePage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <p className="text-red-500">{error}</p>
-        <Link href="/dashboard/recipes" className="mt-4 inline-block text-primary hover:underline text-sm">
+        <Link href="/home/recipes" className="mt-4 inline-block text-primary hover:underline text-sm">
           ← My Recipes
         </Link>
       </div>
@@ -78,7 +78,7 @@ export default function EditRecipePage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard/recipes" className="text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/home/recipes" className="text-sm text-muted-foreground hover:text-foreground">
           ← My Recipes
         </Link>
         <h1 className="text-3xl font-bold text-foreground">Edit Recipe</h1>
