@@ -440,10 +440,10 @@ export default function BlogDetailView({ slug, initialPost = null }) {
               )}
             </div>
 
-            {post.category && getCategoryImage(post.category.slug) && (
+            {post.category && getCategoryImage(post.category.slug, post.category.image_url) && (
               <div className="flex-shrink-0 text-center hidden sm:block">
                 <img
-                  src={getCategoryImage(post.category.slug)}
+                  src={getCategoryImage(post.category.slug, post.category.image_url)}
                   alt={post.category.name}
                   className="w-28 h-28 rounded-lg object-cover border border-border shadow-sm"
                 />

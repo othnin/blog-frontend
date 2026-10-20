@@ -361,9 +361,9 @@ export default function BlogPostsContent() {
             >
               <div className="flex justify-between items-start mb-2">
                 <h2 className="text-xl font-bold text-foreground flex-1 mr-3">{post.title}</h2>
-                {post.category && getCategoryImage(post.category.slug) && (
+                {post.category && getCategoryImage(post.category.slug, post.category.image_url) && (
                   <img
-                    src={getCategoryImage(post.category.slug)}
+                    src={getCategoryImage(post.category.slug, post.category.image_url)}
                     alt={post.category.name}
                     className="w-14 h-14 rounded object-cover flex-shrink-0 border border-border"
                   />

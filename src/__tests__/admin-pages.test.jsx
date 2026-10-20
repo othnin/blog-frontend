@@ -168,6 +168,8 @@ describe('AdminPostsPage', () => {
 
 describe('AdminCategoriesPage', () => {
   const CATS = [{ id: 1, name: 'Tech', slug: 'tech', post_count: 5, image_url: null }];
+  const CAT_WITH_IMAGE = [{ id: 2, name: 'Science', slug: 'science', post_count: 1, image_url: '/api/admin/img/x.png' }];
+
   it('renders loading initially', () => {
     global.fetch.mockResolvedValue(ok([]));
     render(<AdminCategoriesPage />);
@@ -177,6 +179,49 @@ describe('AdminCategoriesPage', () => {
     global.fetch.mockResolvedValueOnce(ok(CATS));
     render(<AdminCategoriesPage />);
     await waitFor(() => expect(screen.getByText('Tech')).toBeInTheDocument());
+  });
+
+  it('shows remove-image button only when a category has an uploaded image', async () => {
+    global.fetch.mockResolvedValueOnce(ok([...CATS, ...CAT_WITH_IMAGE]));
+    render(<AdminCategoriesPage />);
+    await waitFor(() => expect(screen.getByText('Science')).toBeInTheDocument());
+    expect(screen.getAllByTitle('Remove image')).toHaveLength(1);
+  });
+
+  it('does not show remove-image button when no image is uploaded', async () => {
+    global.fetch.mockResolvedValueOnce(ok(CATS));
+    render(<AdminCategoriesPage />);
+    await waitFor(() => expect(screen.getByText('Tech')).toBeInTheDocument());
+    expect(screen.queryByTitle('Remove image')).not.toBeInTheDocument();
+  });
+
+  it('confirms and DELETEs the category image', async () => {
+    global.fetch
+      .mockResolvedValueOnce(ok(CAT_WITH_IMAGE))
+      .mockResolvedValueOnce(ok({}))
+      .mockResolvedValueOnce(ok([]));
+    render(<AdminCategoriesPage />);
+    await waitFor(() => expect(screen.getByText('Science')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByTitle('Remove image'));
+    expect(screen.getByText(/Remove the image for "Science"/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await waitFor(() =>
+      expect(global.fetch).toHaveBeenCalledWith('/api/admin/categories/2/image/', { method: 'DELETE' })
+    );
+  });
+
+  it('shows an error when removing the image fails', async () => {
+    global.fetch
+      .mockResolvedValueOnce(ok(CAT_WITH_IMAGE))
+      .mockResolvedValueOnce(fail({ detail: 'Nope' }, 400));
+    render(<AdminCategoriesPage />);
+    await waitFor(() => expect(screen.getByText('Science')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByTitle('Remove image'));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(screen.getByText('Nope')).toBeInTheDocument());
   });
 });
 describe('Admin API Proxy', () => {

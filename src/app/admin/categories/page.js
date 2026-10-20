@@ -132,6 +132,23 @@ export default function AdminCategoriesPage() {
     }
   }
 
+  function confirmRemoveImage(cat) {
+    setConfirm({
+      message: `Remove the image for "${cat.name}"? The default category image will be used instead.`,
+      action: async () => {
+        setActionError(null);
+        const res = await fetch(API_ENDPOINTS.admin.deleteCategoryImage(cat.id), { method: 'DELETE' });
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          setActionError(d.detail || 'Failed to remove image');
+        } else {
+          fetchCategories();
+        }
+        setConfirm(null);
+      },
+    });
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6 text-foreground">Categories</h1>
@@ -205,6 +222,15 @@ export default function AdminCategoriesPage() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                     <span className="text-white text-xs">Uploading…</span>
                   </div>
+                )}
+                {cat.image_url && uploadingFor !== cat.id && (
+                  <button
+                    title="Remove image"
+                    onClick={() => confirmRemoveImage(cat)}
+                    className="absolute top-1 right-1 p-1 rounded bg-black/50 text-white hover:bg-black/70 z-10"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
 
