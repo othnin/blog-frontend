@@ -11,7 +11,7 @@ import CategoryDropdown from "./CategoryDropdown"
 import BlogDropdown from "./BlogDropdown"
 import RecipeDropdown from "./RecipeDropdown"
 import MapDropdown from "./MapDropdown"
-import { Search, CircleUser } from "lucide-react"
+import { Search, CircleUser, Dna } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -57,6 +57,19 @@ export default function Navbar({className}) {
                     <RecipeDropdown />
 
                     <MapDropdown />
+
+                    {/* The DNA lab lives on the Django backend; /lab redirects to it. */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="text-sm text-muted-foreground hover:text-foreground gap-1 px-2 h-auto py-1"
+                    >
+                        <Link href="/lab" prefetch={false}>
+                            <Dna className="h-4 w-4" />
+                            DNA Lab
+                        </Link>
+                    </Button>
                 </div>
                 
                 {/* Middle section: Search */}

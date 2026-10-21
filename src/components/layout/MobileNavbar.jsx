@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Menu } from "lucide-react"
+import { Menu, Dna } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -46,6 +46,11 @@ export default function MobileNavbar({className}) {
         </Link>
         <Link href="/map" className="text-muted-foreground hover:text-foreground">
           Restaurant Map
+        </Link>
+        {/* The DNA lab lives on the Django backend; /lab redirects to it. */}
+        <Link href="/lab" prefetch={false} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+          <Dna className="h-4 w-4" />
+          DNA Lab
         </Link>
         {auth.isAuthenticated && (
           <Link href="/home/create-recipe" className="text-muted-foreground hover:text-foreground">
