@@ -45,3 +45,25 @@ describe('middleware: django-admin proxy', () => {
     expect(res.headers.get('x-middleware-rewrite')).toContain('/django-admin/login/');
   });
 });
+
+describe('middleware: Thales lab proxy', () => {
+  it('rewrites /thales/ to the backend', () => {
+    const res = middleware(req('/thales/'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toContain('/thales/');
+  });
+
+  it('rewrites hashed assets under /thales/assets/', () => {
+    const res = middleware(req('/thales/assets/index-abc123.js'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toContain(
+      '/thales/assets/index-abc123.js',
+    );
+  });
+
+  it('matches thales routes in config', () => {
+    expect(config.matcher).toEqual(
+      expect.arrayContaining(['/thales', '/thales/:path*']),
+    );
+  });
+});

@@ -10,6 +10,10 @@ export const runtime = 'nodejs';
 // rather than a next.config rewrite: config rewrites rebuild the destination
 // from path segments and drop the trailing slash, which makes Django's
 // APPEND_SLASH 301 fight the proxy into an infinite redirect loop.
+//
+// The Thales lab is proxied for the same reason: Django owns the page and API,
+// but keeping them on the frontend origin is what lets the HttpOnly auth cookie
+// travel with the request. See the matcher below.
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
@@ -31,5 +35,16 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard', '/dashboard/:path*', '/django-admin', '/django-admin/:path*'],
+  matcher: [
+    '/dashboard',
+    '/dashboard/:path*',
+    '/django-admin',
+    '/django-admin/:path*',
+    // The Thales lab is served by Django, but proxying it keeps it on the
+    // frontend origin so the HttpOnly auth cookie is forwarded with the
+    // request. Without this, the cookie is host-scoped to the frontend and
+    // Django would see every lab visitor as anonymous in production.
+    '/thales',
+    '/thales/:path*',
+  ],
 };
