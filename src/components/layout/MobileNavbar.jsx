@@ -47,10 +47,10 @@ export default function MobileNavbar({className}) {
         <Link href="/map" className="text-muted-foreground hover:text-foreground">
           Restaurant Map
         </Link>
-        {/* The DNA lab lives on the Django backend; /lab redirects to it. */}
+        {/* The Thales lab lives on the Django backend; /lab redirects to it. */}
         <Link href="/lab" prefetch={false} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
           <Dna className="h-4 w-4" />
-          DNA Lab
+          Thales
         </Link>
         {auth.isAuthenticated && (
           <Link href="/home/create-recipe" className="text-muted-foreground hover:text-foreground">

@@ -58,7 +58,7 @@ export default function Navbar({className}) {
 
                     <MapDropdown />
 
-                    {/* The DNA lab lives on the Django backend; /lab redirects to it. */}
+                    {/* The Thales lab lives on the Django backend; /lab redirects to it. */}
                     <Button
                         variant="ghost"
                         size="sm"
@@ -67,7 +67,7 @@ export default function Navbar({className}) {
                     >
                         <Link href="/lab" prefetch={false}>
                             <Dna className="h-4 w-4" />
-                            DNA Lab
+                            Thales
                         </Link>
                     </Button>
                 </div>
