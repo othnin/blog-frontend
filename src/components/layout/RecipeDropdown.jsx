@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChefHat } from 'lucide-react';
+import { ChevronDown, ChefHat, MapPin } from 'lucide-react';
 import { API_ENDPOINTS } from '@/config/api';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 
@@ -40,13 +40,19 @@ export default function RecipeDropdown() {
           variant="ghost"
           className="text-sm text-muted-foreground hover:text-foreground gap-1 px-2 h-auto py-1"
         >
-          Recipes
+          Cuisine
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem asChild>
           <Link href="/recipes">All Recipes</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/map">
+            <MapPin className="h-4 w-4 mr-2" />
+            Restaurant Map
+          </Link>
         </DropdownMenuItem>
         {canCreateRecipe && (
           <>
@@ -55,6 +61,12 @@ export default function RecipeDropdown() {
               <Link href="/home/create-recipe">
                 <ChefHat className="h-4 w-4 mr-2" />
                 Add Recipe
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/home/locations">
+                <MapPin className="h-4 w-4 mr-2" />
+                Manage Locations
               </Link>
             </DropdownMenuItem>
           </>
