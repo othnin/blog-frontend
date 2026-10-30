@@ -19,7 +19,7 @@ export default function Navbar({className}) {
     const auth = useAuth()
     const router = useRouter()
     const pathname = usePathname()
-    const finalClass = className ? className : "sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6"
+    const finalClass = className ? className : "sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6"
 
     const [searchValue, setSearchValue] = useState('')
 
