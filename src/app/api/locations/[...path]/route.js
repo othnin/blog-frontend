@@ -13,10 +13,13 @@ async function proxy(request, { params }) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  // Copy multipart/form-data content-type through unchanged (for file uploads)
+  // Pass multipart/form-data content-type through unchanged (for file uploads).
+  // Do not rebuild it from a Blob: Blob.type is lowercased, which corrupts the
+  // case-sensitive multipart boundary and makes Django reject the file.
   const reqContentType = request.headers.get('content-type');
-  if (reqContentType && reqContentType.includes('multipart/form-data')) {
-    delete headers['Content-Type'];
+  const isMultipart = Boolean(reqContentType?.includes('multipart/form-data'));
+  if (isMultipart) {
+    headers['Content-Type'] = reqContentType;
   }
 
   const init = {
@@ -26,11 +29,7 @@ async function proxy(request, { params }) {
   };
 
   if (!['GET', 'HEAD'].includes(request.method)) {
-    if (reqContentType?.includes('multipart/form-data')) {
-      init.body = await request.blob();
-    } else {
-      init.body = await request.text();
-    }
+    init.body = isMultipart ? await request.arrayBuffer() : await request.text();
   }
 
   try {

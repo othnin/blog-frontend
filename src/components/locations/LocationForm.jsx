@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { fetchWithAuth } from '@/lib/tokenUtils';
 import { MICHELIN_RATINGS } from '@/lib/michelin';
 
@@ -78,7 +79,7 @@ export default function LocationForm({ initial = null, onSaved, onCancel }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.detail || 'Could not geocode this address.');
+        setError(getApiErrorMessage(data, 'Could not geocode this address.'));
         return;
       }
       setForm((prev) => ({ ...prev, latitude: data.latitude, longitude: data.longitude }));
@@ -126,7 +127,7 @@ export default function LocationForm({ initial = null, onSaved, onCancel }) {
       });
       const saved = await res.json();
       if (!res.ok) {
-        setError(saved.detail || 'Failed to save restaurant.');
+        setError(getApiErrorMessage(saved, 'Failed to save restaurant.'));
         return;
       }
 
@@ -142,7 +143,7 @@ export default function LocationForm({ initial = null, onSaved, onCancel }) {
           result = await picRes.json();
         } else {
           const picData = await picRes.json();
-          setError(picData.detail || 'Saved, but picture upload failed.');
+          setError(getApiErrorMessage(picData, 'Saved, but picture upload failed.'));
         }
       }
 

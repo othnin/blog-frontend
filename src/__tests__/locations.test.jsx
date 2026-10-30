@@ -236,6 +236,25 @@ describe('LocationForm', () => {
     expect(url).toBe('/api/restaurants/1/');
     expect(options.method).toBe('PUT');
   });
+
+  it('renders a Ninja validation array as text when a picture upload fails', async () => {
+    fetchWithAuth
+      .mockResolvedValueOnce(ok({ ...R1 })) // update restaurant
+      .mockResolvedValueOnce(
+        fail({ detail: [{ type: 'missing', loc: ['file', 'file'], msg: 'Field required' }] }, 422)
+      ); // picture upload
+
+    render(<LocationForm initial={R1} onSaved={jest.fn()} onCancel={jest.fn()} />);
+
+    const picture = new File(['not really a png'], 'photo.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/picture/i), { target: { files: [picture] } });
+
+    const form = screen.getByRole('button', { name: /save changes/i }).closest('form');
+    fireEvent.submit(form);
+
+    // Must not throw React #31 ("Objects are not valid as a React child").
+    await waitFor(() => expect(screen.getByText(/file: Field required/i)).toBeInTheDocument());
+  });
 });
 
 // ─── Dashboard locations page ─────────────────────────────────────────────────
