@@ -7,17 +7,20 @@ import HomepageContent from '@/components/HomepageContent'
 // See docs/BANNER_ROTATION.md for full operational details.
 
 const BANNERS = [
-  'banner1.png',
-  'banner2.png',
-  'banner3.png',
-  'banner4.png',
-  'banner5.png',
-  'banner6.png',
-  'banner7.png',
-  'banner8.png',
-  'banner9.png',
-  'banner10.png',
-  'monsters_eat_austin.png',
+  'banner1.webp',
+  'banner2.webp',
+  'banner3.webp',
+  'banner4.webp',
+  'banner5.webp',
+  'banner6.webp',
+  'banner7.webp',
+  'banner8.webp',
+  'banner9.webp',
+  'banner10.webp',
+  'banner11.webp',
+  'banner12.webp',
+  'banner13.webp',
+  'monsters_eat_austin.webp',
 ];
 
 function getCurrentBanner() {
@@ -31,12 +34,13 @@ export default function Home() {
 
   return (
     <div className="w-full">
-      <div className="w-full">
+      <div className="w-full overflow-hidden">
         <img
           src={bannerSrc}
-          alt="Banner"
-          className="w-full object-cover"
-          style={{ display: 'block', maxHeight: '80vh' }}
+          alt=""
+          width={1920}
+          height={600}
+          className="block h-auto w-full object-cover object-center aspect-video md:aspect-[16/5] max-h-[560px]"
         />
       </div>
       <HomepageContent />
