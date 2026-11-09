@@ -7,7 +7,7 @@ export const CATEGORY_IMAGES = {
   'technology':   '/categories/tech1.png',
   'science':      '/categories/science.jpg',
   'politics':     '/categories/politics1.webp',
-  'philosophy':   '/categories/philosophy.jpg',
+  'philosophy':   '/categories/philosophy.webp',
 };
 
 /**

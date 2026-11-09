@@ -10,6 +10,21 @@ function textAlignStyle(format) {
   return format ? { textAlign: format } : undefined;
 }
 
+// Lexical ElementNode.style is a CSS declaration string (e.g. "list-style-type: circle").
+function inlineStyle(styleString) {
+  if (!styleString) return undefined;
+  return styleString.split(';').reduce((style, declaration) => {
+    const separatorIndex = declaration.indexOf(':');
+    if (separatorIndex === -1) return style;
+    const property = declaration.slice(0, separatorIndex).trim();
+    const value = declaration.slice(separatorIndex + 1).trim();
+    if (!property || !value) return style;
+    const key = property.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+    style[key] = value;
+    return style;
+  }, {});
+}
+
 // Media nodes (image/youtube/tweet) store a simpler 'none'|'left'|'center'|'right' align field.
 function mediaAlignClass(align) {
   switch (align) {
@@ -177,7 +192,11 @@ export default function LexicalRenderer({ jsonContent }) {
 
       case 'listitem':
         return (
-          <li key={index} className={styles.listItem} style={textAlignStyle(node.format)}>
+          <li
+            key={index}
+            className={styles.listItem}
+            style={{ ...inlineStyle(node.style), ...textAlignStyle(node.format) }}
+          >
             {node.children?.map((child, idx) => renderNode(child, idx))}
           </li>
         );

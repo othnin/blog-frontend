@@ -38,6 +38,7 @@ import { ListNode, ListItemNode } from '@lexical/list';
 import { TableNode, TableCellNode, TableRowNode } from '@lexical/table';
 
 import {
+  $getRoot,
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
@@ -62,6 +63,8 @@ import {
   $isHeadingNode,
 } from '@lexical/rich-text';
 import {
+  $insertList,
+  $isListItemNode,
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
   REMOVE_LIST_COMMAND,
@@ -887,6 +890,65 @@ function ToolbarPlugin({ enableFootnotes = true }) {
     });
   };
 
+  // ── Bullet list insertion (with marker style) ───────────────────────────────
+
+  const insertBulletList = (marker) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+
+      const root = $getRoot();
+      const previousListKeys = new Set();
+      const collectListKeys = (node) => {
+        if ($isListNode(node)) previousListKeys.add(node.getKey());
+        node.getChildren?.().forEach(collectListKeys);
+      };
+      root.getChildren().forEach(collectListKeys);
+
+      $insertList('bullet');
+
+      const newLists = new Set();
+      const collectNewLists = (node) => {
+        if ($isListNode(node) && !previousListKeys.has(node.getKey())) {
+          newLists.add(node);
+        }
+        node.getChildren?.().forEach(collectNewLists);
+      };
+      root.getChildren().forEach(collectNewLists);
+
+      const applyMarker = (listItem) => listItem.setStyle(`list-style-type: ${marker}`);
+
+      // A brand-new list was created, so every item in it belongs to this insert.
+      if (newLists.size > 0) {
+        newLists.forEach((list) => {
+          list.getChildren().forEach((child) => {
+            if ($isListItemNode(child)) applyMarker(child);
+          });
+        });
+        return;
+      }
+
+      // The insert merged into an existing list: only restyle the selected
+      // item(s), leaving the existing list's marker style untouched.
+      try {
+        const nextSelection = $getSelection();
+        if (!$isRangeSelection(nextSelection)) return;
+        const selectedItems = new Set();
+        nextSelection.clone().getNodes().forEach((node) => {
+          const item = $getNearestNodeOfType(node, ListItemNode);
+          if (item) selectedItems.add(item);
+        });
+        if (selectedItems.size === 0) {
+          const item = $getNearestNodeOfType(nextSelection.anchor.getNode(), ListItemNode);
+          if (item) selectedItems.add(item);
+        }
+        selectedItems.forEach(applyMarker);
+      } catch {
+        // The selected block was replaced; nothing further to style.
+      }
+    });
+  };
+
   // ── Font family ─────────────────────────────────────────────────────────────
 
   const applyFontFamily = (family) => {
@@ -1213,6 +1275,14 @@ function ToolbarPlugin({ enableFootnotes = true }) {
               onSelect={() => editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)}>
               Horizontal Rule
             </DropdownMenu.Item>
+            <DropdownMenu.Separator className={styles.dropdownSeparator} />
+            <DropdownMenu.Item className={styles.dropdownItem} onSelect={() => insertBulletList('disc')}>
+              Bulleted List (Solid)
+            </DropdownMenu.Item>
+            <DropdownMenu.Item className={styles.dropdownItem} onSelect={() => insertBulletList('circle')}>
+              Bulleted List (Circle)
+            </DropdownMenu.Item>
+            <DropdownMenu.Separator className={styles.dropdownSeparator} />
             <DropdownMenu.Item
               className={`${styles.dropdownItem} ${isUploading ? styles.dropdownItemDisabled : ''}`}
               onSelect={() => !isUploading && imageInputRef.current?.click()}
