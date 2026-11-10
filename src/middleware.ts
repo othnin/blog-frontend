@@ -23,7 +23,15 @@ export function middleware(request) {
   if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.replace(/^\/dashboard/, '/home');
-    return NextResponse.redirect(url, 308);
+    // Relative Location, not an absolute URL built from request.nextUrl: behind
+    // a reverse proxy the Next server only knows its internal address (e.g.
+    // http://localhost:8080), and an absolute redirect would send the browser
+    // there instead of the public domain. The browser resolves this against the
+    // origin it actually requested.
+    return new NextResponse(null, {
+      status: 308,
+      headers: { Location: `${url.pathname}${url.search}` },
+    });
   }
 
   const backend = process.env.DJANGO_BASE_URL || 'http://127.0.0.1:8001';

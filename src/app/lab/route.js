@@ -3,11 +3,13 @@
  * /thales/. This route exists only so the site has a stable address to link
  * to.
  *
- * The redirect stays on the incoming request's origin: /thales/* is proxied
- * through this Next.js app by src/middleware.ts, which keeps the lab on the
- * same origin as the HttpOnly auth cookie. Redirecting to DJANGO_BASE_URL
- * instead would send the browser to a different host, where it has no session,
- * and the lab would bounce straight back to the login page.
+ * The redirect uses a relative Location header so it always stays on the
+ * origin the browser actually requested. Building an absolute URL from
+ * `request.url` (or from a Host header) breaks behind a reverse proxy: the
+ * Next server sees its internal address (e.g. http://localhost:8080) and the
+ * browser follows the redirect away from the public domain. A relative
+ * Location is resolved by the browser against the public origin, which is
+ * also the origin the HttpOnly auth cookie is scoped to.
  *
  * The lab is deliberately loosely coupled. Nothing in the site knows anything
  * about its internals - not the API shape, not the bundle, not the build.
@@ -20,9 +22,12 @@
  */
 export const dynamic = 'force-dynamic';
 
-export function GET(request) {
-  // Response.redirect() requires an absolute URL. Build it from the incoming
-  // request so the redirect stays on the site's own origin (and therefore
-  // keeps the auth cookie) rather than jumping to the Django host.
-  return Response.redirect(new URL('/thales/', request.url), 307);
+export function GET() {
+  // A hand-built Response rather than Response.redirect(), which requires an
+  // absolute URL. RFC 7231 allows a relative reference in Location, and every
+  // browser resolves it against the request URL - i.e. the public domain.
+  return new Response(null, {
+    status: 307,
+    headers: { Location: '/thales/' },
+  });
 }

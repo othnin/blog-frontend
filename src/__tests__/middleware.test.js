@@ -15,21 +15,34 @@ describe('middleware: /dashboard -> /home redirect', () => {
   it('permanently redirects /dashboard to /home', () => {
     const res = middleware(req('/dashboard'));
     expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toBe('http://localhost:3000/home');
+    expect(res.headers.get('location')).toBe('/home');
   });
 
   it('preserves the sub-path', () => {
     const res = middleware(req('/dashboard/edit/5'));
     expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toBe('http://localhost:3000/home/edit/5');
+    expect(res.headers.get('location')).toBe('/home/edit/5');
   });
 
   it('preserves the query string', () => {
     const res = middleware(req('/dashboard/create-post?draft=1'));
     expect(res.status).toBe(308);
-    expect(res.headers.get('location')).toBe(
-      'http://localhost:3000/home/create-post?draft=1',
+    expect(res.headers.get('location')).toBe('/home/create-post?draft=1');
+  });
+
+  it('does not leak the internal proxy address into the redirect', () => {
+    const res = middleware(
+      new NextRequest('http://localhost:8080/dashboard/edit/5', {
+        headers: {
+          host: 'localhost:8080',
+          'x-forwarded-host': 'localhost:8080',
+          'x-forwarded-proto': 'http',
+        },
+      }),
     );
+
+    expect(res.headers.get('location')).toBe('/home/edit/5');
+    expect(res.headers.get('location')).not.toContain('localhost');
   });
 
   it('matches dashboard routes in config', () => {
