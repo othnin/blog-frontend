@@ -80,3 +80,37 @@ describe('middleware: Thales lab proxy', () => {
     );
   });
 });
+
+describe('middleware: Thales API proxy', () => {
+  it('rewrites /api/thales/* to the backend', () => {
+    const res = middleware(req('/api/thales/molecules/base-pairs/'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toContain(
+      '/api/thales/molecules/base-pairs/',
+    );
+  });
+
+  it('keeps the trailing slash so Django does not APPEND_SLASH-redirect', () => {
+    const res = middleware(req('/api/thales/lessons/'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toMatch(/\/$/);
+    expect(res.headers.get('x-middleware-rewrite')).toContain(
+      '/api/thales/lessons/',
+    );
+  });
+
+  it('rewrites slashless thales API paths too', () => {
+    const res = middleware(req('/api/thales/molecules/adenine'));
+
+    expect(res.headers.get('x-middleware-rewrite')).toContain(
+      '/api/thales/molecules/adenine',
+    );
+  });
+
+  it('matches thales API routes in config', () => {
+    expect(config.matcher).toEqual(
+      expect.arrayContaining(['/api/thales', '/api/thales/:path*']),
+    );
+  });
+});
+

@@ -54,5 +54,15 @@ export const config = {
     // Django would see every lab visitor as anonymous in production.
     '/thales',
     '/thales/:path*',
+    // The Thales API is on Django too, and its URLs all end in a slash
+    // (POST /api/thales/molecules/base-pairs/, GET /api/thales/lessons/, ...).
+    // The /api/:path* fallback rewrite in next.config.mjs rebuilds its
+    // destination from path segments and drops that trailing slash, so Django
+    // APPEND_SLASH-301s the GETs into a redirect loop, and resolves the
+    // base-pair POST to the GET-only /api/thales/molecules/{base} route,
+    // answering 405 instead of generating the pair. There is no local route
+    // handler under /api/thales, so proxying here bypasses nothing.
+    '/api/thales',
+    '/api/thales/:path*',
   ],
 };
